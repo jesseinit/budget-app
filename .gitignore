@@ -1,0 +1,42 @@
+# Git and version control
+.git
+
+# Python cache and build
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache
+.mypy_cache
+.coverage
+htmlcov/
+
+# Virtual environments  
+.venv
+venv/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+
+.env
+
+# Only exclude what we don't need in container
+node_modules/
+.tmp/
+dist/
+build/
