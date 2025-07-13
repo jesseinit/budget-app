@@ -9,7 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./server/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U budgetuser -d budgetdb"]
       interval: 5s
@@ -25,7 +25,7 @@ services:
       - redis_data:/data
 
   app:
-    build: .
+    build: ./server
     ports:
       - "9000:8000"
     environment:
@@ -37,8 +37,8 @@ services:
       redis:
         condition: service_started
     volumes:
-      - .:/code
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - ./server:/code
+    # command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     tty: true
     stdin_open: true
 
