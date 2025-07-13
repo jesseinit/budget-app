@@ -321,7 +321,7 @@ class AnalyticsService:
         """Get financial goals with progress"""
         query = (
             select(FinancialGoal)
-            .where(and_(FinancialGoal.user_id == user_id, FinancialGoal.is_active == True))
+            .where(and_(FinancialGoal.user_id == user_id, FinancialGoal.is_active is True))
             .order_by(FinancialGoal.target_date.asc().nullslast())
         )
 

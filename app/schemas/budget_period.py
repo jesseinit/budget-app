@@ -9,8 +9,9 @@ from pydantic import BaseModel, Field
 class BudgetPeriodBase(BaseModel):
     start_date: date
     end_date: date
-    expected_income: Decimal = Field(default=0, decimal_places=2)
-    carry_forward: Decimal = Field(default=0, decimal_places=2)
+    expected_income: Decimal = Field(default=0, decimal_places=2, description="Expected income for the period")
+    brought_forward: Decimal = Field(default=0, description="Money brought in from previous period")
+    carry_forward: Decimal = Field(default=0, decimal_places=2, description="Money carried out to next period")
 
 
 class BudgetPeriodCreate(BudgetPeriodBase):

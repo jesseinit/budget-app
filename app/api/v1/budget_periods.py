@@ -80,3 +80,15 @@ async def update_budget_period(
     if not updated_period:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget period not found")
     return updated_period
+
+
+@router.post("/{period_id}/complete", response_model=BudgetPeriodResponse)
+async def complete_budget_period(
+    period_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Complete budget period and calculate final totals"""
+    service = BudgetService(db)
+    completed_period = await service.complete_budget_period(period_id, current_user.id)
+    return completed_period

@@ -18,7 +18,7 @@ class User(Base):
     oauth_id = Column(String(255), nullable=False)
     avatar_url = Column(String(500))
     timezone = Column(String(50), default="UTC")
-    currency = Column(String(3), default="USD")
+    currency = Column(String(3), default="EUR")
     salary_day = Column(Integer, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

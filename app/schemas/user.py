@@ -9,7 +9,7 @@ class UserBase(BaseModel):
     email: EmailStr
     name: str
     timezone: str = "UTC"
-    currency: str = "USD"
+    currency: str = "EUR"
     salary_day: int = 1
 
 
