@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, time, timezone
 from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
@@ -12,12 +12,18 @@ from app.utils.date_parser import date_validator
 class TransactionBase(BaseModel):
     amount: Decimal = Field(..., gt=0, decimal_places=2)
     description: Optional[str] = None
-    transaction_date: date
+    transacted_at: datetime
     type: str  # income, expense, saving, investment
     payment_method: Optional[str] = None
     tags: Optional[List[str]] = None
 
-    _transaction_date_validator = date_validator("transaction_date")
+    @field_validator("transacted_at", mode="before")
+    def parse_transacted_at(cls, v):
+        if isinstance(v, date) and not isinstance(v, datetime):
+            return datetime.combine(v, time.min, tzinfo=timezone.utc)
+        if isinstance(v, datetime):
+            return v
+        return v
 
 
 class TransactionCreate(TransactionBase):
@@ -27,7 +33,7 @@ class TransactionCreate(TransactionBase):
 
     @field_validator("recurring_frequency")
     def validate_recurring_frequency(cls, v, values):
-        if values.get("is_recurring") and not v:
+        if values.data.get("is_recurring") and not v:
             raise ValueError("recurring_frequency is required when is_recurring is True")
         return v
 
@@ -35,12 +41,10 @@ class TransactionCreate(TransactionBase):
 class TransactionUpdate(BaseModel):
     amount: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
     description: Optional[str] = None
-    transaction_date: Optional[date] = None
+    transacted_at: Optional[date] = None
     category_id: Optional[UUID] = None
     payment_method: Optional[str] = None
     tags: Optional[List[str]] = None
-
-    _transaction_date_validator = date_validator("transaction_date")
 
 
 class TransactionResponse(TransactionBase):

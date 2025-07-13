@@ -17,7 +17,7 @@ class Transaction(Base):
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=False)
     amount = Column(DECIMAL(12, 2), nullable=False)
     description = Column(Text)
-    transaction_date = Column(Date, nullable=False)
+    transacted_at = Column(DateTime(timezone=True), nullable=False)
     type = Column(String(20), nullable=False)  # income, expense, saving, investment
     payment_method = Column(String(50))  # cash, card, bank_transfer, digital_wallet
     is_recurring = Column(Boolean, default=False)

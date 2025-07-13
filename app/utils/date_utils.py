@@ -1,25 +1,23 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Tuple
 
 from dateutil.relativedelta import relativedelta
 
 
-def calculate_salary_period(salary_day: int, reference_date: date = None) -> Tuple[date, date]:
+def calculate_salary_period(salary_day: int, reference_date: datetime = None) -> Tuple[datetime, datetime]:
     """Calculate budget period start and end dates based on salary day"""
     if reference_date is None:
         reference_date = date.today()
 
-    # Find the most recent salary date
-    current_month_salary = reference_date.replace(day=salary_day)
+    # Find the next salary date (salary_day of next month)
+    next_month_salary = (reference_date + relativedelta(months=1)).replace(day=salary_day)
 
-    if reference_date >= current_month_salary:
-        # We're in or past the current salary period
-        start_date = current_month_salary
-        end_date = (current_month_salary + relativedelta(months=1)) - timedelta(days=1)
-    else:
-        # We're before this month's salary date
-        start_date = current_month_salary - relativedelta(months=1)
-        end_date = current_month_salary - timedelta(days=1)
+    # The current period started from the previous salary date
+    current_period_start = next_month_salary - relativedelta(months=1)
+
+    # Period runs from previous salary day to next salary day
+    start_date = current_period_start
+    end_date = next_month_salary.replace(tzinfo=timezone.utc)
 
     return start_date, end_date
 

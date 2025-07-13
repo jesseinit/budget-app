@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -60,19 +60,19 @@ class AnalyticsService:
     async def get_yearly_summary(self, user_id: UUID, year: int) -> YearlySummary:
         """Get yearly financial summary"""
         # Get all periods for the year
-        start_date = date(year, 1, 1)
-        end_date = date(year, 12, 31)
+        start_date = datetime(year, 1, 1)
+        end_date = datetime(year, 12, 31)
 
         query = (
             select(BudgetPeriod)
             .where(
                 and_(
                     BudgetPeriod.user_id == user_id,
-                    BudgetPeriod.start_date <= end_date,
-                    BudgetPeriod.end_date >= start_date,
+                    BudgetPeriod.started_at <= end_date,
+                    BudgetPeriod.ended_at >= start_date,
                 )
             )
-            .order_by(BudgetPeriod.start_date)
+            .order_by(BudgetPeriod.started_at)
         )
 
         result = await self.db.execute(query)
@@ -113,21 +113,21 @@ class AnalyticsService:
 
         query = (
             select(
-                extract("year", Transaction.transaction_date).label("year"),
-                extract("month", Transaction.transaction_date).label("month"),
+                extract("year", Transaction.transacted_at).label("year"),
+                extract("month", Transaction.transacted_at).label("month"),
                 func.sum(Transaction.amount).label("total_amount"),
                 Transaction.type,
             )
             .where(
                 and_(
                     Transaction.user_id == user_id,
-                    Transaction.transaction_date >= start_date,
-                    Transaction.transaction_date <= end_date,
+                    Transaction.transacted_at >= start_date,
+                    Transaction.transacted_at <= end_date,
                 )
             )
             .group_by(
-                extract("year", Transaction.transaction_date),
-                extract("month", Transaction.transaction_date),
+                extract("year", Transaction.transacted_at),
+                extract("month", Transaction.transacted_at),
                 Transaction.type,
             )
             .order_by("year", "month")
@@ -198,12 +198,13 @@ class AnalyticsService:
     # Helper methods
     async def _get_current_period(self, user_id: UUID) -> Optional[BudgetPeriod]:
         """Get current active budget period"""
-        today = date.today()
+        today = datetime.now(timezone.utc)
         query = select(BudgetPeriod).where(
             and_(
                 BudgetPeriod.user_id == user_id,
-                BudgetPeriod.start_date <= today,
-                BudgetPeriod.end_date >= today,
+                BudgetPeriod.started_at <= today,
+                BudgetPeriod.ended_at.is_(None),
+                BudgetPeriod.status == "active",
             )
         )
 
@@ -213,7 +214,8 @@ class AnalyticsService:
     async def _calculate_total_balance(self, user_id: UUID) -> Decimal:
         """Calculate total balance across all periods"""
         # Get all completed budget periods
-        query = select(BudgetPeriod).where(and_(BudgetPeriod.user_id == user_id, BudgetPeriod.status == "completed"))
+        query = select(BudgetPeriod).where(and_(BudgetPeriod.user_id == user_id))
+        # query = select(BudgetPeriod).where(and_(BudgetPeriod.user_id == user_id, BudgetPeriod.status == "completed"))
 
         result = await self.db.execute(query)
         periods = result.scalars().all()
@@ -225,7 +227,7 @@ class AnalyticsService:
                 - period.total_expenses
                 - period.total_savings
                 - period.total_investments
-                + period.carry_forward
+                + period.carried_forward
             )
             total_balance += period_balance
 
@@ -310,7 +312,7 @@ class AnalyticsService:
             select(Transaction)
             .options(joinedload(Transaction.category))
             .where(Transaction.user_id == user_id)
-            .order_by(desc(Transaction.transaction_date), desc(Transaction.created_at))
+            .order_by(desc(Transaction.transacted_at), desc(Transaction.created_at))
             .limit(limit)
         )
 
@@ -352,8 +354,8 @@ class AnalyticsService:
                 .where(
                     and_(
                         Transaction.user_id == user_id,
-                        Transaction.transaction_date >= month_start,
-                        Transaction.transaction_date <= month_end,
+                        Transaction.transacted_at >= month_start,
+                        Transaction.transacted_at <= month_end,
                     )
                 )
                 .group_by(Transaction.type)
@@ -391,8 +393,8 @@ class AnalyticsService:
             .where(
                 and_(
                     Transaction.user_id == user_id,
-                    Transaction.transaction_date >= start_date,
-                    Transaction.transaction_date <= end_date,
+                    Transaction.transacted_at >= start_date,
+                    Transaction.transacted_at <= end_date,
                 )
             )
             .group_by(Category.name, Category.type)

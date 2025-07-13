@@ -68,7 +68,7 @@ async def create_sample_transactions(user_id, db: AsyncSession):
                 category_id=salary_category.id,
                 amount=salary_amount,
                 description="Monthly Salary",
-                transaction_date=current_date,
+                transacted_at=current_date,
                 type="income",
                 payment_method="bank_transfer",
             )
@@ -86,7 +86,7 @@ async def create_sample_transactions(user_id, db: AsyncSession):
                 category_id=expense_category.id,
                 amount=expense_amount,
                 description=f"Expense - {expense_category.name}",
-                transaction_date=current_date,
+                transacted_at=current_date,
                 type="expense",
                 payment_method=random.choice(["card", "cash", "digital_wallet"]),
             )
@@ -104,7 +104,7 @@ async def create_sample_transactions(user_id, db: AsyncSession):
                 category_id=savings_category.id,
                 amount=savings_amount,
                 description="Monthly Savings",
-                transaction_date=current_date,
+                transacted_at=current_date,
                 type="saving",
                 payment_method="bank_transfer",
             )
@@ -122,7 +122,7 @@ async def create_sample_transactions(user_id, db: AsyncSession):
                 category_id=investment_category.id,
                 amount=investment_amount,
                 description=f"Investment - {investment_category.name}",
-                transaction_date=current_date,
+                transacted_at=current_date,
                 type="investment",
                 payment_method="bank_transfer",
             )

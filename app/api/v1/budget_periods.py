@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -12,6 +13,7 @@ from app.schemas.budget_period import (
     BudgetPeriodResponse,
     BudgetPeriodSummary,
     BudgetPeriodUpdate,
+    CompletePeriodRequest,
 )
 from app.services.budget_service import BudgetService
 
@@ -37,8 +39,12 @@ async def get_current_period(current_user: User = Depends(get_current_user), db:
     service = BudgetService(db)
     period = await service.get_current_period(current_user.id)
     if not period:
-        # Auto-create current period if it doesn't exist
-        period = await service.create_current_period(current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active budget period found. Please create a new budget period.",
+        )
+        # # Auto-create current period if it doesn't exist
+        # period = await service.create_current_period(current_user.id)
     return await service.get_period_summary(period.id, current_user.id)
 
 
@@ -85,10 +91,24 @@ async def update_budget_period(
 @router.post("/{period_id}/complete", response_model=BudgetPeriodResponse)
 async def complete_budget_period(
     period_id: UUID,
+    body: CompletePeriodRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Complete budget period and calculate final totals"""
     service = BudgetService(db)
-    completed_period = await service.complete_budget_period(period_id, current_user.id)
+    completed_period = await service.complete_budget_period(period_id, current_user.id, body.ended_at)
     return completed_period
+
+
+# Two endpoints that bulk rebuild pudget periods, it takes list periods ids
+@router.post("/rebuild", response_model=List[BudgetPeriodResponse])
+async def rebuild_budget_periods(
+    period_ids: List[UUID],
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Rebuild budget periods from a list of IDs"""
+    service = BudgetService(db)
+    rebuilt_periods = await service.rebuild_budget_periods(period_ids, current_user.id)
+    return rebuilt_periods

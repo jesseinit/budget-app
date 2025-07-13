@@ -38,7 +38,7 @@ class CategoryService:
         if existing:
             raise ValueError(f"Category '{category_data.name}' of type '{category_data.type}' already exists")
 
-        category = Category(user_id=user_id, **category_data.dict())
+        category = Category(user_id=user_id, **category_data.model_dump())
 
         self.db.add(category)
         await self.db.commit()

@@ -39,12 +39,12 @@ class TransactionService:
         if transaction_type:
             filters.append(Transaction.type == transaction_type)
         if start_date:
-            filters.append(Transaction.transaction_date >= start_date)
+            filters.append(Transaction.transacted_at >= start_date)
         if end_date:
-            filters.append(Transaction.transaction_date <= end_date)
+            filters.append(Transaction.transacted_at <= end_date)
 
         query = query.where(and_(*filters))
-        query = query.order_by(desc(Transaction.transaction_date))
+        query = query.order_by(desc(Transaction.transacted_at))
         query = query.offset(skip).limit(limit)
 
         result = await self.db.execute(query)
@@ -52,21 +52,27 @@ class TransactionService:
 
     async def create_transaction(self, user_id: UUID, transaction_data: TransactionCreate) -> Transaction:
         """Create a new transaction"""
-        # Get or create current budget period
-        budget_period = await self.budget_service.get_or_create_period_for_date(
-            user_id, transaction_data.transaction_date
-        )
+        try:
+            # Get or create current budget period
+            budget_period = await self.budget_service.get_or_create_period_for_date(
+                user_id, transaction_data.transacted_at
+            )
 
-        transaction = Transaction(user_id=user_id, budget_period_id=budget_period.id, **transaction_data.dict())
+            transaction = Transaction(
+                user_id=user_id, budget_period_id=budget_period.id, **transaction_data.model_dump()
+            )
 
-        self.db.add(transaction)
-        await self.db.commit()
-        await self.db.refresh(transaction)
+            self.db.add(transaction)
+            await self.db.commit()
+            await self.db.refresh(transaction)
 
-        # Update budget period totals
-        await self.budget_service.recalculate_period_totals(budget_period.id)
+            # Update budget period totals
+            await self.budget_service.recalculate_period_totals(budget_period.id)
 
-        return transaction
+            return transaction
+        except Exception as e:
+            await self.db.rollback()
+            raise e
 
     async def get_transaction(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
         """Get a specific transaction"""
@@ -91,8 +97,8 @@ class TransactionService:
             setattr(transaction, field, value)
 
         # Check if we need to move to a different budget period
-        if update_data.transaction_date:
-            new_period = await self.budget_service.get_or_create_period_for_date(user_id, update_data.transaction_date)
+        if update_data.transacted_at:
+            new_period = await self.budget_service.get_or_create_period_for_date(user_id, update_data.transacted_at)
             transaction.budget_period_id = new_period.id
 
         await self.db.commit()
@@ -128,7 +134,7 @@ class TransactionService:
 
         for transaction_data in transactions_data:
             budget_period = await self.budget_service.get_or_create_period_for_date(
-                user_id, transaction_data.transaction_date
+                user_id, transaction_data.transacted_at
             )
 
             transaction = Transaction(user_id=user_id, budget_period_id=budget_period.id, **transaction_data.dict())

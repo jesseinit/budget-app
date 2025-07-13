@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import date, datetime
+
 from pydantic import field_validator
-from datetime import datetime
 
 
 def parse_date_string(date_str: str) -> date:
