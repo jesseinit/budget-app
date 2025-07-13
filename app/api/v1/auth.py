@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -40,9 +41,7 @@ async def google_callback(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"OAuth error: {error}")
 
     if not code:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Authorization code is required"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Authorization code is required")
 
     # In production, verify the state parameter here
     # if state != stored_state:
@@ -52,9 +51,7 @@ async def google_callback(
     try:
         return await auth_service.handle_google_callback(code)
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Authentication failed: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Authentication failed: {str(e)}")
 
 
 @router.post("/github/callback", response_model=Token)
@@ -64,9 +61,7 @@ async def github_callback(callback_data: OAuthCallback, db: AsyncSession = Depen
     try:
         return await auth_service.handle_github_callback(callback_data.code)
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Authentication failed: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Authentication failed: {str(e)}")
 
 
 @router.post("/refresh", response_model=Token)
@@ -76,15 +71,11 @@ async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
     try:
         return await auth_service.refresh_access_token(refresh_token)
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
 
 @router.post("/logout")
-async def logout(
-    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
-):
+async def logout(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """Logout user"""
     # In a real implementation, you might want to blacklist the token
     return {"message": "Successfully logged out"}

@@ -1,12 +1,13 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, desc
-from sqlalchemy.orm import joinedload
-from typing import List, Optional
 from datetime import date
+from typing import List, Optional
 from uuid import UUID
 
-from app.models.transaction import Transaction
+from sqlalchemy import and_, desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+
 from app.models.category import Category
+from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate, TransactionUpdate
 from app.services.budget_service import BudgetService
 
@@ -49,18 +50,14 @@ class TransactionService:
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def create_transaction(
-        self, user_id: UUID, transaction_data: TransactionCreate
-    ) -> Transaction:
+    async def create_transaction(self, user_id: UUID, transaction_data: TransactionCreate) -> Transaction:
         """Create a new transaction"""
         # Get or create current budget period
         budget_period = await self.budget_service.get_or_create_period_for_date(
             user_id, transaction_data.transaction_date
         )
 
-        transaction = Transaction(
-            user_id=user_id, budget_period_id=budget_period.id, **transaction_data.dict()
-        )
+        transaction = Transaction(user_id=user_id, budget_period_id=budget_period.id, **transaction_data.dict())
 
         self.db.add(transaction)
         await self.db.commit()
@@ -95,9 +92,7 @@ class TransactionService:
 
         # Check if we need to move to a different budget period
         if update_data.transaction_date:
-            new_period = await self.budget_service.get_or_create_period_for_date(
-                user_id, update_data.transaction_date
-            )
+            new_period = await self.budget_service.get_or_create_period_for_date(user_id, update_data.transaction_date)
             transaction.budget_period_id = new_period.id
 
         await self.db.commit()
@@ -136,9 +131,7 @@ class TransactionService:
                 user_id, transaction_data.transaction_date
             )
 
-            transaction = Transaction(
-                user_id=user_id, budget_period_id=budget_period.id, **transaction_data.dict()
-            )
+            transaction = Transaction(user_id=user_id, budget_period_id=budget_period.id, **transaction_data.dict())
             transactions.append(transaction)
 
         self.db.add_all(transactions)

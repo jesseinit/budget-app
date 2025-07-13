@@ -24,9 +24,7 @@ class UserService:
 
     async def get_user_by_oauth(self, oauth_provider: str, oauth_id: str) -> Optional[User]:
         """Get user by OAuth provider and ID"""
-        query = select(User).where(
-            and_(User.oauth_provider == oauth_provider, User.oauth_id == oauth_id)
-        )
+        query = select(User).where(and_(User.oauth_provider == oauth_provider, User.oauth_id == oauth_id))
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
@@ -85,16 +83,12 @@ class UserService:
         from app.models.transaction import Transaction
 
         # Count transactions
-        transaction_count_query = select(func.count(Transaction.id)).where(
-            Transaction.user_id == user_id
-        )
+        transaction_count_query = select(func.count(Transaction.id)).where(Transaction.user_id == user_id)
         transaction_count_result = await self.db.execute(transaction_count_query)
         transaction_count = transaction_count_result.scalar()
 
         # Count budget periods
-        period_count_query = select(func.count(BudgetPeriod.id)).where(
-            BudgetPeriod.user_id == user_id
-        )
+        period_count_query = select(func.count(BudgetPeriod.id)).where(BudgetPeriod.user_id == user_id)
         period_count_result = await self.db.execute(period_count_query)
         period_count = period_count_result.scalar()
 

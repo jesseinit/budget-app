@@ -1,3 +1,5 @@
+import secrets
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict
 
@@ -9,8 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.user import User
 from app.schemas.auth import Token
-import secrets
-import urllib.parse
 
 
 class AuthService:
@@ -304,9 +304,7 @@ class AuthService:
             "name": user.name,
             "exp": datetime.now(timezone.utc) + access_token_expires,
         }
-        access_token = jwt.encode(
-            access_token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-        )
+        access_token = jwt.encode(access_token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
         # Refresh token
         refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
@@ -315,18 +313,14 @@ class AuthService:
             "type": "refresh",
             "exp": datetime.now(timezone.utc) + refresh_token_expires,
         }
-        refresh_token = jwt.encode(
-            refresh_token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-        )
+        refresh_token = jwt.encode(refresh_token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
         return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
     async def refresh_access_token(self, refresh_token: str) -> Token:
         """Refresh access token using refresh token"""
         try:
-            payload = jwt.decode(
-                refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-            )
+            payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
             user_id = payload.get("sub")
             token_type = payload.get("type")

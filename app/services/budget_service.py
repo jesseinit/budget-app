@@ -1,10 +1,11 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func, desc
-from typing import List, Optional
 from datetime import date, datetime
-from dateutil.relativedelta import relativedelta
-from uuid import UUID
 from decimal import Decimal
+from typing import List, Optional
+from uuid import UUID
+
+from dateutil.relativedelta import relativedelta
+from sqlalchemy import and_, desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.budget_period import BudgetPeriod
 from app.models.transaction import Transaction
@@ -71,9 +72,7 @@ class BudgetService:
 
         return period
 
-    async def get_or_create_period_for_date(
-        self, user_id: UUID, transaction_date: date
-    ) -> BudgetPeriod:
+    async def get_or_create_period_for_date(self, user_id: UUID, transaction_date: date) -> BudgetPeriod:
         """Get or create budget period for a specific date"""
         # Find existing period that contains this date
         query = select(BudgetPeriod).where(
@@ -133,15 +132,11 @@ class BudgetService:
 
             await self.db.commit()
 
-    async def _get_previous_period_balance(
-        self, user_id: UUID, current_start_date: date
-    ) -> Decimal:
+    async def _get_previous_period_balance(self, user_id: UUID, current_start_date: date) -> Decimal:
         """Calculate balance to carry forward from previous period"""
         query = (
             select(BudgetPeriod)
-            .where(
-                and_(BudgetPeriod.user_id == user_id, BudgetPeriod.end_date < current_start_date)
-            )
+            .where(and_(BudgetPeriod.user_id == user_id, BudgetPeriod.end_date < current_start_date))
             .order_by(desc(BudgetPeriod.end_date))
             .limit(1)
         )

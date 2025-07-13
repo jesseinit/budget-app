@@ -1,17 +1,18 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func, extract, desc
-from sqlalchemy.orm import joinedload
-from typing import List, Dict, Any, Optional
 from datetime import date, datetime
-from dateutil.relativedelta import relativedelta
-from uuid import UUID
 from decimal import Decimal
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
-from app.models.transaction import Transaction
-from app.models.category import Category
+from dateutil.relativedelta import relativedelta
+from sqlalchemy import and_, desc, extract, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+
 from app.models.budget_period import BudgetPeriod
+from app.models.category import Category
 from app.models.financial_goal import FinancialGoal
-from app.schemas.analytics import DashboardSummary, YearlySummary, CategoryBreakdown, MonthlyTrend
+from app.models.transaction import Transaction
+from app.schemas.analytics import CategoryBreakdown, DashboardSummary, MonthlyTrend, YearlySummary
 
 
 class AnalyticsService:
@@ -35,9 +36,7 @@ class AnalyticsService:
         )
 
         # Get top expense categories
-        top_categories = await self._get_top_expense_categories(
-            user_id, current_period.id if current_period else None
-        )
+        top_categories = await self._get_top_expense_categories(user_id, current_period.id if current_period else None)
 
         # Get recent transactions
         recent_transactions = await self._get_recent_transactions(user_id, limit=10)
@@ -151,9 +150,7 @@ class AnalyticsService:
 
         return formatted_trends
 
-    async def get_category_breakdown(
-        self, user_id: UUID, period_id: Optional[UUID] = None
-    ) -> List[CategoryBreakdown]:
+    async def get_category_breakdown(self, user_id: UUID, period_id: Optional[UUID] = None) -> List[CategoryBreakdown]:
         """Get category breakdown for a specific period or current period"""
         if period_id:
             period_filter = Transaction.budget_period_id == period_id
@@ -216,9 +213,7 @@ class AnalyticsService:
     async def _calculate_total_balance(self, user_id: UUID) -> Decimal:
         """Calculate total balance across all periods"""
         # Get all completed budget periods
-        query = select(BudgetPeriod).where(
-            and_(BudgetPeriod.user_id == user_id, BudgetPeriod.status == "completed")
-        )
+        query = select(BudgetPeriod).where(and_(BudgetPeriod.user_id == user_id, BudgetPeriod.status == "completed"))
 
         result = await self.db.execute(query)
         periods = result.scalars().all()
@@ -255,9 +250,7 @@ class AnalyticsService:
             "investments": current_period.total_investments,
         }
 
-    async def _get_top_expense_categories(
-        self, user_id: UUID, period_id: Optional[UUID]
-    ) -> List[CategoryBreakdown]:
+    async def _get_top_expense_categories(self, user_id: UUID, period_id: Optional[UUID]) -> List[CategoryBreakdown]:
         """Get top expense categories for a period"""
         if not period_id:
             return []
@@ -376,16 +369,13 @@ class AnalyticsService:
                     expenses=month_data.get("expense", Decimal("0")),
                     savings=month_data.get("saving", Decimal("0")),
                     investments=month_data.get("investment", Decimal("0")),
-                    net_worth=month_data.get("income", Decimal("0"))
-                    - month_data.get("expense", Decimal("0")),
+                    net_worth=month_data.get("income", Decimal("0")) - month_data.get("expense", Decimal("0")),
                 )
             )
 
         return trends
 
-    async def _get_yearly_category_breakdown(
-        self, user_id: UUID, year: int
-    ) -> List[CategoryBreakdown]:
+    async def _get_yearly_category_breakdown(self, user_id: UUID, year: int) -> List[CategoryBreakdown]:
         """Get category breakdown for entire year"""
         start_date = date(year, 1, 1)
         end_date = date(year, 12, 31)

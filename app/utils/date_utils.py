@@ -1,6 +1,7 @@
 from datetime import date, timedelta
-from dateutil.relativedelta import relativedelta
 from typing import Tuple
+
+from dateutil.relativedelta import relativedelta
 
 
 def calculate_salary_period(salary_day: int, reference_date: date = None) -> Tuple[date, date]:

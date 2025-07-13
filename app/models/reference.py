@@ -1,6 +1,6 @@
 """Reference tables that don't need user relationships"""
 
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
 from app.database import Base
