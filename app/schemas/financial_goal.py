@@ -4,6 +4,7 @@ from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+from app.utils.date_parser import date_validator
 
 
 class FinancialGoalBase(BaseModel):
@@ -11,6 +12,8 @@ class FinancialGoalBase(BaseModel):
     target_amount: Decimal = Field(..., gt=0, decimal_places=2)
     target_date: Optional[date] = None
     category: Optional[str] = None
+
+    _target_date_validator = date_validator("target_date")
 
 
 class FinancialGoalCreate(FinancialGoalBase):
@@ -23,6 +26,8 @@ class FinancialGoalUpdate(BaseModel):
     target_date: Optional[date] = None
     category: Optional[str] = None
     current_amount: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
+
+    _target_date_validator = date_validator("target_date")
 
 
 class FinancialGoalResponse(FinancialGoalBase):

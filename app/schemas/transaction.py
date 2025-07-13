@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.category import CategoryResponse
+from app.utils.date_parser import date_validator
 
 
 class TransactionBase(BaseModel):
@@ -15,6 +16,8 @@ class TransactionBase(BaseModel):
     type: str  # income, expense, saving, investment
     payment_method: Optional[str] = None
     tags: Optional[List[str]] = None
+
+    _transaction_date_validator = date_validator("transaction_date")
 
 
 class TransactionCreate(TransactionBase):
@@ -36,6 +39,8 @@ class TransactionUpdate(BaseModel):
     category_id: Optional[UUID] = None
     payment_method: Optional[str] = None
     tags: Optional[List[str]] = None
+
+    _transaction_date_validator = date_validator("transaction_date")
 
 
 class TransactionResponse(TransactionBase):
