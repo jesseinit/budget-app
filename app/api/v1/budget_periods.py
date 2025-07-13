@@ -14,6 +14,7 @@ from app.schemas.budget_period import (
     BudgetPeriodSummary,
     BudgetPeriodUpdate,
     CompletePeriodRequest,
+    BulkRebuildRequest,
 )
 from app.services.budget_service import BudgetService
 
@@ -104,11 +105,11 @@ async def complete_budget_period(
 # Two endpoints that bulk rebuild pudget periods, it takes list periods ids
 @router.post("/rebuild", response_model=List[BudgetPeriodResponse])
 async def rebuild_budget_periods(
-    period_ids: List[UUID],
+    period_ids: BulkRebuildRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Rebuild budget periods from a list of IDs"""
     service = BudgetService(db)
-    rebuilt_periods = await service.rebuild_budget_periods(period_ids, current_user.id)
+    rebuilt_periods = await service.rebuild_budget_periods(period_ids.period_ids, current_user.id)
     return rebuilt_periods

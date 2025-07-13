@@ -1,9 +1,10 @@
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timezone, timedelta
 from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, computed_field
+
 from app.schemas.transaction import TransactionResponse
 
 
@@ -15,6 +16,13 @@ class BudgetPeriodBase(BaseModel):
         if isinstance(v, date) and not isinstance(v, datetime):
             return datetime.combine(v, time.min, tzinfo=timezone.utc)
         return v
+
+    @computed_field
+    def period_name(self) -> str:
+        # Format period name as "Month Name - Year" of the next month
+        next_month = self.started_at + timedelta(days=28)
+        # format the month and year
+        return next_month.strftime("%B, %Y")
 
 
 class BudgetPeriodCreate(BudgetPeriodBase):
@@ -62,6 +70,13 @@ class BudgetPeriodResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @computed_field
+    def period_name(self) -> str:
+        # Format period name as "Month Name - Year" of the next month
+        next_month = self.started_at + timedelta(days=28)
+        # format the month and year
+        return next_month.strftime("%B, %Y")
 
 
 class BudgetPeriodSummary(BudgetPeriodResponse):
@@ -126,3 +141,7 @@ class BudgetPeriodSummary(BudgetPeriodResponse):
 
 class CompletePeriodRequest(BaseModel):
     ended_at: Optional[datetime] = None
+
+
+class BulkRebuildRequest(BaseModel):
+    period_ids: List[UUID]
