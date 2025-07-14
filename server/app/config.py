@@ -1,9 +1,10 @@
 from typing import List
 
 from pydantic_settings import BaseSettings
+import os
 
 
-class Settings(BaseSettings):
+class BaseConfig(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost/budgetdb"
 
@@ -16,8 +17,7 @@ class Settings(BaseSettings):
     # OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GITHUB_CLIENT_ID: str = ""
-    GITHUB_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = "http://localhost:9000/auth/google/callback"
 
     # CORS
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8080"]
@@ -40,10 +40,25 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
 
+    # Environment
+    ENV: str = "local"  # local, staging, prod
+
     class Config:
-        env_file = ".env"
         case_sensitive = False  # Allow lowercase env vars
         extra = "ignore"  # Ignore extra fields instead of forbidding them
 
 
-settings = Settings()
+class LocalConfig(BaseConfig):
+    class Config(BaseConfig.Config):
+        env_file = ".env"
+
+
+class ProdConfig(BaseConfig):
+    class Config(BaseConfig.Config):
+        env_file = None
+
+
+env = os.getenv("ENV", "local")
+settings = LocalConfig() if env == "local" else ProdConfig()
+
+# settings = Settings()

@@ -108,5 +108,5 @@ class UserService:
             "total_budget_periods": period_count or 0,
             "active_financial_goals": goal_count or 0,
             "days_since_signup": days_since_signup,
-            "member_since": user.created_at.date() if user else None,
+            "member_since": user.created_at if user else None,
         }

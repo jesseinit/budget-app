@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.user import User
 from app.schemas.auth import Token
+from app.models.category import Category
 
 
 class AuthService:
@@ -27,7 +28,7 @@ class AuthService:
         base_url = "https://accounts.google.com/o/oauth2/v2/auth"
         params = {
             "client_id": settings.GOOGLE_CLIENT_ID,
-            "redirect_uri": "http://localhost:9000/auth/google/callback",  # Update for production
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
             "scope": "openid email profile",
             "response_type": "code",
             "access_type": "offline",
@@ -37,19 +38,6 @@ class AuthService:
         }
 
         return f"{base_url}?{urllib.parse.urlencode(params)}"
-
-    def get_github_auth_url(self) -> str:
-        """Generate GitHub OAuth URL"""
-        base_url = "https://github.com/login/oauth/authorize"
-        params = {
-            "client_id": settings.GITHUB_CLIENT_ID,
-            "redirect_uri": "http://localhost:8000/auth/github/callback",  # Update for production
-            "scope": "user:email",
-            "response_type": "code",
-        }
-
-        query_string = "&".join([f"{k}={v}" for k, v in params.items()])
-        return f"{base_url}?{query_string}"
 
     async def handle_google_callback(self, code: str) -> Token:
         """Handle Google OAuth callback and create/login user"""
@@ -73,28 +61,6 @@ class AuthService:
         # Generate JWT tokens
         return self._create_tokens(user)
 
-    async def handle_github_callback(self, code: str) -> Token:
-        """Handle GitHub OAuth callback and create/login user"""
-        # Exchange code for access token
-        token_data = await self._exchange_github_code(code)
-
-        # Get user info from GitHub
-        user_info = await self._get_github_user_info(token_data["access_token"])
-
-        # Create or get existing user
-        user = await self._create_or_get_user(
-            {
-                "email": user_info["email"],
-                "name": user_info["name"] or user_info["login"],
-                "oauth_provider": "github",
-                "oauth_id": str(user_info["id"]),
-                "avatar_url": user_info.get("avatar_url"),
-            }
-        )
-
-        # Generate JWT tokens
-        return self._create_tokens(user)
-
     async def _exchange_google_code(self, code: str) -> Dict[str, Any]:
         """Exchange Google authorization code for access token"""
         async with httpx.AsyncClient() as client:
@@ -111,22 +77,6 @@ class AuthService:
             response.raise_for_status()
             return response.json()
 
-    async def _exchange_github_code(self, code: str) -> Dict[str, Any]:
-        """Exchange GitHub authorization code for access token"""
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://github.com/login/oauth/access_token",
-                data={
-                    "client_id": settings.GITHUB_CLIENT_ID,
-                    "client_secret": settings.GITHUB_CLIENT_SECRET,
-                    "code": code,
-                    "redirect_uri": "http://localhost:8000/auth/github/callback",
-                },
-                headers={"Accept": "application/json"},
-            )
-            response.raise_for_status()
-            return response.json()
-
     async def _get_google_user_info(self, access_token: str) -> Dict[str, Any]:
         """Get user information from Google"""
         async with httpx.AsyncClient() as client:
@@ -136,32 +86,6 @@ class AuthService:
             )
             response.raise_for_status()
             return response.json()
-
-    async def _get_github_user_info(self, access_token: str) -> Dict[str, Any]:
-        """Get user information from GitHub"""
-        async with httpx.AsyncClient() as client:
-            # Get user profile
-            user_response = await client.get(
-                "https://api.github.com/user", headers={"Authorization": f"Bearer {access_token}"}
-            )
-            user_response.raise_for_status()
-            user_data = user_response.json()
-
-            # Get user email (if not public)
-            if not user_data.get("email"):
-                email_response = await client.get(
-                    "https://api.github.com/user/emails",
-                    headers={"Authorization": f"Bearer {access_token}"},
-                )
-                email_response.raise_for_status()
-                emails = email_response.json()
-                primary_email = next(
-                    (email["email"] for email in emails if email["primary"]),
-                    emails[0]["email"] if emails else None,
-                )
-                user_data["email"] = primary_email
-
-            return user_data
 
     async def _create_or_get_user(self, user_data: Dict[str, Any]) -> User:
         """Create new user or get existing user"""
@@ -197,7 +121,6 @@ class AuthService:
 
     async def _create_default_categories_for_user(self, user_id):
         """Create default categories for a new user"""
-        from app.models.category import Category
 
         default_categories = [
             # Income
@@ -279,13 +202,6 @@ class AuthService:
                 "type": "investment",
                 "color": "#2196F3",
                 "icon": "📊",
-                "is_default": True,
-            },
-            {
-                "name": "Retirement (401k)",
-                "type": "investment",
-                "color": "#607D8B",
-                "icon": "🏦",
                 "is_default": True,
             },
         ]

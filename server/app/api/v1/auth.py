@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
-from app.schemas.auth import OAuthCallback, Token
+from app.schemas.auth import Token
 from app.schemas.user import UserResponse
 from app.services.auth_service import AuthService
 
@@ -18,13 +18,6 @@ async def google_auth():
     """Get Google OAuth URL"""
     auth_service = AuthService()
     return {"auth_url": auth_service.get_google_auth_url()}
-
-
-@router.get("/github")
-async def github_auth():
-    """Get GitHub OAuth URL"""
-    auth_service = AuthService()
-    return {"auth_url": auth_service.get_github_auth_url()}
 
 
 @router.get("/google/callback", response_model=Token)
@@ -50,16 +43,6 @@ async def google_callback(
     auth_service = AuthService(db)
     try:
         return await auth_service.handle_google_callback(code)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Authentication failed: {str(e)}")
-
-
-@router.post("/github/callback", response_model=Token)
-async def github_callback(callback_data: OAuthCallback, db: AsyncSession = Depends(get_db)):
-    """Handle GitHub OAuth callback"""
-    auth_service = AuthService(db)
-    try:
-        return await auth_service.handle_github_callback(callback_data.code)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Authentication failed: {str(e)}")
 
