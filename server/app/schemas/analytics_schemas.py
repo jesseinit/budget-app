@@ -40,7 +40,7 @@ class YearlySummary(BaseModel):
 
 class DashboardSummary(BaseModel):
     current_period: BudgetPeriodResponse
-    total_balance: Decimal
+    net_worth: Decimal
     this_month_income: Decimal
     this_month_expenses: Decimal
     this_month_savings: Decimal

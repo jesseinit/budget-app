@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import and_, or_, desc, extract, func, select
+from sqlalchemy import and_, asc, desc, extract, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -46,7 +46,7 @@ class AnalyticsService:
 
         return DashboardSummary(
             current_period=current_period,
-            total_balance=total_balance,
+            net_worth=total_balance,
             this_month_income=month_totals["income"],
             this_month_expenses=month_totals["expenses"],
             this_month_savings=month_totals["savings"],
@@ -87,8 +87,9 @@ class AnalyticsService:
         total_expenses = sum(p.total_expenses for p in periods)
         total_savings = sum(p.total_savings for p in periods)
         total_investments = sum(p.total_investments for p in periods)
+        total_adjustments = sum(p.total_adjustments for p in periods or Decimal("0"))
 
-        net_savings = total_savings + total_investments
+        net_savings = abs(total_savings) + abs(total_investments) - abs(total_adjustments)
         savings_rate = self._calculate_savings_rate(total_income, net_savings)
 
         # Get monthly trends
@@ -181,12 +182,13 @@ class AnalyticsService:
         breakdown_data = result.fetchall()
 
         # Calculate total for percentages
-        total_amount = sum(item.amount for item in breakdown_data)
+        total_amount = sum(abs(item.amount) for item in breakdown_data)
+        print(total_amount)
 
         # Format results
         breakdown = []
         for item in breakdown_data:
-            percentage = float((item.amount / total_amount) * 100) if total_amount > 0 else 0
+            percentage = Decimal((abs(item.amount) / total_amount) * 100) if total_amount > 0 else 0
             breakdown.append(
                 CategoryBreakdown(
                     category_name=item.category_name,
@@ -217,21 +219,36 @@ class AnalyticsService:
 
     async def _calculate_total_balance(self, user_id: UUID) -> Decimal:
         """Calculate total balance across all periods"""
-        # Get all completed budget periods
-        query = select(BudgetPeriod).where(and_(BudgetPeriod.user_id == user_id))
-        # query = select(BudgetPeriod).where(and_(BudgetPeriod.user_id == user_id, BudgetPeriod.status == "completed"))
+        # Get all budget periods
+        query = (
+            select(BudgetPeriod)
+            .where(and_(BudgetPeriod.user_id == user_id))
+            .order_by(BudgetPeriod.total_adjustments.desc())
+        )
 
         result = await self.db.execute(query)
         periods = result.scalars().all()
 
+        kw = {
+            "total_brought_forward": sum(p.brought_forward for p in periods) or Decimal("0"),
+            "total_actual_income": sum(p.actual_income for p in periods) or Decimal("0"),
+            "total_expenses": sum(p.total_expenses for p in periods) or Decimal("0"),
+            "total_savings": sum(p.total_savings for p in periods) or Decimal("0"),
+            "total_investments": sum(p.total_investments for p in periods) or Decimal("0"),
+            "total_adjustments": sum(p.total_adjustments for p in periods or Decimal("0")),
+        }
+
+        print(kw)
+
         total_balance = Decimal("0")
         for period in periods:
             period_balance = (
-                period.actual_income
-                - period.total_expenses
-                - period.total_savings
-                - period.total_investments
-                + period.carried_forward
+                # period.actual_income
+                # - abs(period.total_expenses)
+                abs(period.total_savings)
+                + abs(period.total_investments)
+                - abs(period.total_adjustments)
+                # + period.carried_forward
             )
             total_balance += period_balance
 
@@ -277,7 +294,7 @@ class AnalyticsService:
                 )
             )
             .group_by(Category.name, Category.type)
-            .order_by(desc(func.sum(Transaction.amount)))
+            .order_by(asc(func.sum(Transaction.amount)))
             .limit(5)
         )
 

@@ -28,6 +28,7 @@ services:
     build: ./server
     ports:
       - "9000:8000"
+      - 5678:5678  # Debugging port for debugpy
     environment:
       DATABASE_URL: postgresql+asyncpg://budgetuser:budgetpass@db:5432/budgetdb
       REDIS_URL: redis://redis:6379
@@ -39,6 +40,9 @@ services:
     volumes:
       - ./server:/code
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=./app/log_conf.yaml
+    # command: python -m debugpy --listen 0.0.0.0:5678 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=./app/log_conf.yaml
+    # command: CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
     tty: true
     stdin_open: true
   

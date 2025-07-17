@@ -57,13 +57,13 @@ class BudgetPeriodResponse(BaseModel):
     user_id: UUID
     started_at: datetime
     ended_at: Optional[datetime] = None
-    expected_income: Decimal
     brought_forward: Decimal
-    carried_forward: Decimal
+    expected_income: Decimal
     actual_income: Decimal
     total_expenses: Decimal
     total_savings: Decimal
     total_investments: Decimal
+    carried_forward: Decimal
     status: str
     created_at: datetime
     updated_at: Optional[datetime] = None

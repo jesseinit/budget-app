@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload
 
 from app.models.category_models import Category
 from app.models.transaction_models import Transaction
-from app.schemas.transaction_schemas import TransactionCreate, TransactionUpdate
+from app.schemas.transaction_schemas import TransactionCreate, TransactionType, TransactionUpdate
 from app.services.budget_service import BudgetService
 
 
@@ -57,6 +57,8 @@ class TransactionService:
             budget_period = await self.budget_service.get_or_create_period_for_date(
                 user_id, transaction_data.transacted_at
             )
+            if transaction_data.type != TransactionType.INCOME:
+                transaction_data.amount = -abs(transaction_data.amount)
 
             transaction = Transaction(
                 user_id=user_id, budget_period_id=budget_period.id, **transaction_data.model_dump()

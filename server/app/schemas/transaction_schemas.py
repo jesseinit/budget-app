@@ -1,19 +1,27 @@
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
+from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from app.schemas.category_schemas import CategoryResponse
-from app.utils.date_parser import date_validator
+
+
+class TransactionType(str, Enum):
+    INCOME = "income"
+    EXPENSE = "expense"
+    SAVING = "saving"
+    INVESTMENT = "investment"
+    ADJUSTMENT = "adjustment"
 
 
 class TransactionBase(BaseModel):
     amount: Decimal = Field(..., decimal_places=2)
     description: Optional[str] = None
     transacted_at: datetime
-    type: str  # income, expense, saving, investment
+    type: TransactionType  # Now restricted to specific values
     payment_method: Optional[str] = None
     tags: Optional[List[str]] = None
 
@@ -61,6 +69,15 @@ class TransactionResponse(TransactionBase):
     class Config:
         from_attributes = True
 
+    # add computed property that returns period name(Month - Year) based transacted_at
+
 
 class TransactionWithCategory(TransactionResponse):
     category: CategoryResponse
+
+    @computed_field
+    def period_name(self) -> str:
+        # Format period name as "Month Name - Year" of the next month
+        next_month = self.transacted_at + timedelta(days=28)
+        # format the month and year
+        return next_month.strftime("%B, %Y")

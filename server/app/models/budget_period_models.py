@@ -4,8 +4,8 @@ from decimal import Decimal
 
 from sqlalchemy import DECIMAL, Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import object_session, relationship
-from sqlalchemy.sql import func
+from sqlalchemy.orm import column_property, object_session, relationship
+from sqlalchemy.sql import and_, func, select, text
 
 from app.database import Base
 
@@ -27,6 +27,12 @@ class BudgetPeriod(Base):
     status = Column(String(20), default="active")  # active, completed, projected
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    total_adjustments = column_property(
+        select(func.coalesce(func.sum(text("amount")), 0))
+        .select_from(text("transactions"))
+        .where(text("budget_period_id = budget_periods.id AND type = 'adjustment'"))
+        .scalar_subquery()
+    )
 
     # Add next and previous period for easier navigation
     next_period_id = Column(UUID(as_uuid=True), ForeignKey("budget_periods.id"), nullable=True)
@@ -34,9 +40,7 @@ class BudgetPeriod(Base):
 
     # Relationships
     user = relationship("User", back_populates="budget_periods")
-    transactions = relationship(
-        "Transaction", back_populates="budget_period", cascade="all, delete-orphan", join_depth=1
-    )
+    transactions = relationship("Transaction", back_populates="budget_period", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<BudgetPeriod(id={self.id}, user_id={self.user_id}, start_date={self.started_at}, end_date={self.ended_at})>"
@@ -60,18 +64,17 @@ class BudgetPeriod(Base):
     def calculate_carried_forward(self) -> Decimal:
         """Calculate how much money to carry forward to next period"""
         available_money = self.actual_income + self.brought_forward
-        money_used = self.total_expenses + max(
-            0, self.get_savings_and_investments()
-        )  # Ensure savings/investments are not negative
-        return max(Decimal(available_money - money_used), Decimal("0"))
-
-    def calculate_net_position(self) -> Decimal:
-        """Calculate net financial position for this period"""
-        return self.calculate_carried_forward()
+        money_used = self.total_expenses + self.get_savings_and_investments()
+        # Ensure savings/investments are not negative
+        return max(Decimal(available_money + money_used), Decimal("0"))
 
     def get_savings_and_investments(self) -> Decimal:
         """Get total savings and investments for this period"""
         return Decimal(self.total_savings + self.total_investments)
+
+    def calculate_net_position(self) -> Decimal:
+        """Calculate net financial position for this period"""
+        return self.calculate_carried_forward()
 
     def get_available_money(self) -> Decimal:
         """Get total money available for this period"""
@@ -90,7 +93,3 @@ class BudgetPeriod(Base):
 
         self.carried_forward = self.calculate_carried_forward()
         self.status = "completed"
-
-    async def get_transactions(self):
-        """Get all transactions for this budget period"""
-        return self.transactions
