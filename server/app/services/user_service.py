@@ -4,8 +4,8 @@ from uuid import UUID
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.models.user_models import User
+from app.schemas.user_schemas import UserCreate, UserUpdate
 
 
 class UserService:
@@ -78,9 +78,9 @@ class UserService:
         """Get user statistics"""
         from sqlalchemy import func
 
-        from app.models.budget_period import BudgetPeriod
-        from app.models.financial_goal import FinancialGoal
-        from app.models.transaction import Transaction
+        from app.models.budget_period_models import BudgetPeriod
+        from app.models.financial_goal_models import FinancialGoal
+        from app.models.transaction_models import Transaction
 
         # Count transactions
         transaction_count_query = select(func.count(Transaction.id)).where(Transaction.user_id == user_id)

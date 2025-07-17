@@ -6,9 +6,9 @@ from sqlalchemy import and_, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.models.category import Category
-from app.models.transaction import Transaction
-from app.schemas.transaction import TransactionCreate, TransactionUpdate
+from app.models.category_models import Category
+from app.models.transaction_models import Transaction
+from app.schemas.transaction_schemas import TransactionCreate, TransactionUpdate
 from app.services.budget_service import BudgetService
 
 

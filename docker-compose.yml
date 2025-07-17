@@ -38,7 +38,7 @@ services:
         condition: service_started
     volumes:
       - ./server:/code
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=./app/log_conf.yaml
     tty: true
     stdin_open: true
   

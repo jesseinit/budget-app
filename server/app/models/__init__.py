@@ -1,10 +1,10 @@
-from app.models.budget_period import BudgetPeriod
-from app.models.category import Category
-from app.models.financial_goal import FinancialGoal
-from app.models.recurring_transaction import RecurringTransaction
-from app.models.reference import AppLog, AppSetting, Currency, PaymentMethod
-from app.models.transaction import Transaction
-from app.models.user import User
+from app.models.budget_period_models import BudgetPeriod
+from app.models.category_models import Category
+from app.models.financial_goal_models import FinancialGoal
+from app.models.recurring_transaction_models import RecurringTransaction
+from app.models.reference_models import AppLog, AppSetting, Currency, PaymentMethod
+from app.models.transaction_models import Transaction
+from app.models.user_models import User
 
 __all__ = [
     "User",

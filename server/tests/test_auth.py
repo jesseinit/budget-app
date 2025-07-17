@@ -45,7 +45,7 @@ async def test_auth_endpoints():
 @pytest.mark.asyncio
 async def test_token_creation():
     """Test JWT token creation"""
-    from app.models.user import User
+    from app.models.user_models import User
 
     user = User(
         id="test-id",

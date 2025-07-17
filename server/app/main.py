@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -16,14 +17,18 @@ from app.api.v1 import (
 )
 from app.config import settings
 
+logger = logging.getLogger(__name__)
+
+# from app.utils.logger import logger
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("Starting up...")
+    logger.info("Starting up...")
     yield
     # Shutdown
-    print("Shutting down...")
+    logger.info("Shutting down...")
 
 
 app = FastAPI(

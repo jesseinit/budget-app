@@ -9,9 +9,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models.user import User
-from app.schemas.auth import Token
-from app.models.category import Category
+from app.models.category_models import Category
+from app.models.user_models import User
+from app.schemas.auth_schemas import Token
 
 
 class AuthService:

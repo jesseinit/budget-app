@@ -4,8 +4,8 @@ from uuid import UUID
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.category import Category
-from app.schemas.category import CategoryCreate, CategoryUpdate
+from app.models.category_models import Category
+from app.schemas.category_schemas import CategoryCreate, CategoryUpdate
 
 
 class CategoryService:
@@ -76,7 +76,7 @@ class CategoryService:
             return False
 
         # Check if category is being used by transactions
-        from app.models.transaction import Transaction
+        from app.models.transaction_models import Transaction
 
         query = select(Transaction).where(Transaction.category_id == category_id).limit(1)
         result = await self.db.execute(query)

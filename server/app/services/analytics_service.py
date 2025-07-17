@@ -1,18 +1,18 @@
+import logging
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import and_, desc, extract, func, select
+from sqlalchemy import and_, or_, desc, extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
-from app.models.budget_period import BudgetPeriod
-from app.models.category import Category
-from app.models.financial_goal import FinancialGoal
-from app.models.transaction import Transaction
-from app.schemas.analytics import CategoryBreakdown, DashboardSummary, MonthlyTrend, YearlySummary
+from app.models import BudgetPeriod, Category, FinancialGoal, Transaction
+from app.schemas import CategoryBreakdown, DashboardSummary, MonthlyTrend, YearlySummary
+
+logger = logging.getLogger(__name__)
 
 
 class AnalyticsService:
@@ -61,15 +61,19 @@ class AnalyticsService:
         """Get yearly financial summary"""
         # Get all periods for the year
         start_date = datetime(year, 1, 1)
-        end_date = datetime(year, 12, 31)
+        end_date = datetime(year, 12, 31, 23, 59, 59)
 
         query = (
             select(BudgetPeriod)
+            .options(selectinload(BudgetPeriod.transactions))
             .where(
                 and_(
                     BudgetPeriod.user_id == user_id,
                     BudgetPeriod.started_at <= end_date,
-                    BudgetPeriod.ended_at >= start_date,
+                    or_(
+                        BudgetPeriod.ended_at.is_(None),
+                        BudgetPeriod.ended_at >= start_date,
+                    ),
                 )
             )
             .order_by(BudgetPeriod.started_at)

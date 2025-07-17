@@ -1,8 +1,8 @@
 """Initialize database with sample categories and data"""
 
 from app.database import AsyncSessionLocal
-from app.models.category import Category
-from app.models.user import User
+from app.models.category_models import Category
+from app.models.user_models import User
 
 
 async def create_default_categories():

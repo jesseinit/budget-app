@@ -1,4 +1,5 @@
 # app/services/budget_service.py
+import logging
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import List, Optional
@@ -9,11 +10,13 @@ from fastapi import HTTPException
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.budget_period import BudgetPeriod
-from app.models.transaction import Transaction
-from app.models.user import User
-from app.schemas.budget_period import BudgetPeriodCreate, BudgetPeriodSummary, BudgetPeriodUpdate
+from app.models.budget_period_models import BudgetPeriod
+from app.models.transaction_models import Transaction
+from app.models.user_models import User
+from app.schemas.budget_period_schemas import BudgetPeriodCreate, BudgetPeriodSummary, BudgetPeriodUpdate
 from app.utils.date_utils import calculate_salary_period
+
+logger = logging.getLogger(__name__)
 
 
 class BudgetService:
@@ -135,7 +138,7 @@ class BudgetService:
             setattr(period, field, value)
 
         # if ended_at is provided mark as completed
-        if update_data.ended_at:
+        if update_data.ended_at or period.status == "completed":
             period.mark_completed(update_data.ended_at)
 
         await self.db.commit()
@@ -193,12 +196,22 @@ class BudgetService:
     async def get_or_create_period_for_date(self, user_id: UUID, transacted_at: date) -> BudgetPeriod:
         """Get or create budget period for a specific date"""
         # Find existing period that contains this date
-        query = select(BudgetPeriod).where(
-            and_(
-                BudgetPeriod.user_id == user_id,
-                BudgetPeriod.started_at <= transacted_at,
-                BudgetPeriod.status == "active",
+        # Get periods that are few dates before and after the transaction date
+
+        window_days = 3  # Number of days before and after
+        start_window = transacted_at - relativedelta(days=window_days)
+        end_window = transacted_at + relativedelta(days=window_days)
+
+        query = (
+            select(BudgetPeriod)
+            .where(
+                and_(
+                    BudgetPeriod.user_id == user_id,
+                    BudgetPeriod.started_at >= start_window,
+                    BudgetPeriod.started_at <= end_window,
+                )
             )
+            .order_by(BudgetPeriod.started_at)
         )
 
         result = await self.db.execute(query)
@@ -317,7 +330,7 @@ class BudgetService:
 
     async def _get_expense_by_category(self, period_id: UUID) -> dict:
         """Get expenses grouped by category for a period"""
-        from app.models.category import Category
+        from app.models.category_models import Category
 
         query = (
             select(Category.name, func.sum(Transaction.amount).label("total"))
@@ -361,6 +374,11 @@ class BudgetService:
         result = await self.db.execute(query)
         totals = {row.type: row.total for row in result}
 
+        logger.info(f">>>>Rebuilding period {period_id} with totals: {totals}")
+        # breakpoint()
+
+        prv_period = period.previous_period
+        period.brought_forward = prv_period.carried_forward if prv_period else period.brought_forward
         period.actual_income = totals.get("income", Decimal("0"))
         period.total_expenses = totals.get("expense", Decimal("0"))
         period.total_savings = totals.get("saving", Decimal("0"))
@@ -383,4 +401,17 @@ class BudgetService:
             period = await self.rebuild_budget_period(period_id, user_id)
             if period:
                 updated_periods.append(period)
+        updated_periods.reverse()
         return updated_periods
+
+
+""" 
+5835.71,5835.71,3356.79,500.00,2000.00,active,157.87,0.00
+7571.15,7571.15,4907.14,110.00,2500.00,completed,103.86,157.87
+4700.21,4700.21,4667.97,0.00,0.00,completed,71.62,103.86
+2437.25,2437.25,2621.73,0.00,0.00,completed,237.10,52.62
+7810.33,7825.89,3208.22,4500.00,0.00,completed,119.43,237.10
+5170.37,5170.37,2433.51,2700.00,0.00,completed,46.57,83.43
+1556.43,1556.43,2395.27,0.00,0.00,completed,8440.00,7601.16
+
+"""

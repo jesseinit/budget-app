@@ -22,6 +22,7 @@ aiofiles = "^24.1.0"
 pillow = "^11.3.0"
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.41"}
 authlib = "^1.6.0"
+pyyaml = "^6.0.2"
 
 
 [tool.poetry.group.dev.dependencies]

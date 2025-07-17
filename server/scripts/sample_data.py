@@ -5,11 +5,11 @@ from datetime import date, timedelta
 from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import AsyncSessionLocal
-from app.models.user import User
-from app.models.category import Category
-from app.models.transaction import Transaction
-from app.models.budget_period import BudgetPeriod
-from app.models.financial_goal import FinancialGoal
+from app.models.user_models import User
+from app.models.category_models import Category
+from app.models.transaction_models import Transaction
+from app.models.budget_period_models import BudgetPeriod
+from app.models.financial_goal_models import FinancialGoal
 from app.services.budget_service import BudgetService
 import random
 from scripts.init_database import create_default_categories

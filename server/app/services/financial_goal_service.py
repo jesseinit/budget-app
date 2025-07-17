@@ -6,8 +6,8 @@ from uuid import UUID
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.financial_goal import FinancialGoal
-from app.schemas.financial_goal import FinancialGoalCreate, FinancialGoalUpdate
+from app.models.financial_goal_models import FinancialGoal
+from app.schemas.financial_goal_schemas import FinancialGoalCreate, FinancialGoalUpdate
 
 
 class FinancialGoalService:

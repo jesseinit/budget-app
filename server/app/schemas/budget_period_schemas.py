@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, computed_field, field_validator
 
-from app.schemas.transaction import TransactionResponse
+from app.schemas.transaction_schemas import TransactionResponse
 
 
 class BudgetPeriodBase(BaseModel):

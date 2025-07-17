@@ -5,12 +5,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.schemas.category import CategoryResponse
+from app.schemas.category_schemas import CategoryResponse
 from app.utils.date_parser import date_validator
 
 
 class TransactionBase(BaseModel):
-    amount: Decimal = Field(..., gt=0, decimal_places=2)
+    amount: Decimal = Field(..., decimal_places=2)
     description: Optional[str] = None
     transacted_at: datetime
     type: str  # income, expense, saving, investment

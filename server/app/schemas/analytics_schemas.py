@@ -3,9 +3,9 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel
 
-from app.schemas.budget_period import BudgetPeriodResponse
-from app.schemas.financial_goal import FinancialGoalResponse
-from app.schemas.transaction import TransactionResponse
+from app.schemas.budget_period_schemas import BudgetPeriodResponse
+from app.schemas.financial_goal_schemas import FinancialGoalResponse
+from app.schemas.transaction_schemas import TransactionResponse
 
 
 class CategoryBreakdown(BaseModel):
