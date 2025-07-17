@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -49,3 +49,14 @@ class DashboardSummary(BaseModel):
     recent_transactions: List[TransactionResponse]
     upcoming_bills: List[Dict[str, Any]]
     financial_goals_progress: List[FinancialGoalResponse]
+
+
+# Schema for Trading212 account data
+class Trading212AccountData(BaseModel):
+    free: Decimal
+    total: Decimal
+    ppl: Decimal
+    result: Decimal
+    invested: Decimal
+    pieCash: Decimal
+    blocked: Optional[bool] = None

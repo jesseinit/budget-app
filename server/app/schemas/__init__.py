@@ -3,6 +3,7 @@ from app.schemas.analytics_schemas import (
     DashboardSummary,
     MonthlyTrend,
     YearlySummary,
+    Trading212AccountData,
 )
 from app.schemas.auth_schemas import OAuthCallback, Token, TokenData
 from app.schemas.budget_period_schemas import BudgetPeriodCreate, BudgetPeriodResponse, BudgetPeriodUpdate

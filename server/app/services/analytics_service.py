@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.models import BudgetPeriod, Category, FinancialGoal, Transaction
-from app.schemas import CategoryBreakdown, DashboardSummary, MonthlyTrend, YearlySummary
+from app.schemas import CategoryBreakdown, DashboardSummary, MonthlyTrend, YearlySummary, Trading212AccountData
+from app.utils.trading import get_trading_212_account_data
 
 logger = logging.getLogger(__name__)
 
@@ -25,14 +26,14 @@ class AnalyticsService:
         current_period = await self._get_current_period(user_id)
 
         # Calculate total balance
-        total_balance = await self._calculate_total_balance(user_id)
+        net_worth = await self._calculate_total_balance(user_id)
 
         # Get this month's totals
         month_totals = await self._get_month_totals(user_id)
 
         # Calculate savings rate
         savings_rate = self._calculate_savings_rate(
-            month_totals["income"], month_totals["savings"] + month_totals["investments"]
+            month_totals["income"], abs(month_totals["savings"]) + abs(month_totals["investments"])
         )
 
         # Get top expense categories
@@ -44,12 +45,15 @@ class AnalyticsService:
         # Get financial goals progress
         goals_progress = await self._get_financial_goals_progress(user_id)
 
+        # Get Trading212 account data
+        trading_data = await self._get_trading_212_account_data()
+
         return DashboardSummary(
             current_period=current_period,
-            net_worth=total_balance,
+            net_worth=net_worth + trading_data.total,
             this_month_income=month_totals["income"],
             this_month_expenses=month_totals["expenses"],
-            this_month_savings=month_totals["savings"],
+            this_month_savings=abs(month_totals["savings"]) - abs(month_totals["adjustments"]),
             savings_rate=savings_rate,
             top_expense_categories=top_categories,
             recent_transactions=recent_transactions,
@@ -202,6 +206,20 @@ class AnalyticsService:
         return breakdown
 
     # Helper methods
+    async def _get_trading_212_account_data(self) -> Dict[str, Any]:
+        """Fetch Trading212 account data"""
+        trading_data = await get_trading_212_account_data()
+        trading_data = Trading212AccountData(
+            free=trading_data.get("free", Decimal("0")),
+            total=trading_data.get("total", Decimal("0")),
+            ppl=trading_data.get("ppl", Decimal("0")),
+            result=trading_data.get("result", Decimal("0")),
+            invested=trading_data.get("invested", Decimal("0")),
+            pieCash=trading_data.get("pieCash", Decimal("0")),
+            blocked=trading_data.get("blocked", None),
+        )
+        return trading_data
+
     async def _get_current_period(self, user_id: UUID) -> Optional[BudgetPeriod]:
         """Get current active budget period"""
         today = datetime.now(timezone.utc)
@@ -264,6 +282,7 @@ class AnalyticsService:
                 "expenses": Decimal("0"),
                 "savings": Decimal("0"),
                 "investments": Decimal("0"),
+                "adjustments": Decimal("0"),
             }
 
         return {
@@ -271,6 +290,7 @@ class AnalyticsService:
             "expenses": current_period.total_expenses,
             "savings": current_period.total_savings,
             "investments": current_period.total_investments,
+            "adjustments": current_period.total_adjustments,
         }
 
     async def _get_top_expense_categories(self, user_id: UUID, period_id: Optional[UUID]) -> List[CategoryBreakdown]:

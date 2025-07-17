@@ -43,6 +43,9 @@ class BaseConfig(BaseSettings):
     # Environment
     ENV: str = "local"  # local, staging, prod
 
+    # Trading212 API Key
+    TRADING212_API_KEY: str = ""
+
     class Config:
         case_sensitive = False  # Allow lowercase env vars
         extra = "ignore"  # Ignore extra fields instead of forbidding them
