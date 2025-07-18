@@ -23,6 +23,7 @@ pillow = "^11.3.0"
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.41"}
 authlib = "^1.6.0"
 pyyaml = "^6.0.2"
+redis = {extras = ["hiredis"], version = "^6.2.0"}
 
 
 [tool.poetry.group.dev.dependencies]

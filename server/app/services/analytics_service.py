@@ -46,7 +46,7 @@ class AnalyticsService:
         goals_progress = await self._get_financial_goals_progress(user_id)
 
         # Get Trading212 account data
-        trading_data = await self._get_trading_212_account_data()
+        trading_data = await self._get_trading_212_account_data(user_id)
 
         return DashboardSummary(
             current_period=current_period,
@@ -206,9 +206,9 @@ class AnalyticsService:
         return breakdown
 
     # Helper methods
-    async def _get_trading_212_account_data(self) -> Dict[str, Any]:
+    async def _get_trading_212_account_data(self, user_id: str) -> Dict[str, Any]:
         """Fetch Trading212 account data"""
-        trading_data = await get_trading_212_account_data()
+        trading_data = await get_trading_212_account_data(user_id=user_id)
         trading_data = Trading212AccountData(
             free=trading_data.get("free", Decimal("0")),
             total=trading_data.get("total", Decimal("0")),
