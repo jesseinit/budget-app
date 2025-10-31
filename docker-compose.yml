@@ -39,10 +39,8 @@ services:
         condition: service_started
     volumes:
       - ./server:/code
+      - server_venv:/code/.venv
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=./app/log_conf.yaml
-    # command: python -m debugpy --listen 0.0.0.0:5678 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=./app/log_conf.yaml
-    # command: CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-
     tty: true
     stdin_open: true
   
@@ -58,3 +56,4 @@ volumes:
   postgres_data:
   redis_data:
   node_modules:
+  server_venv:

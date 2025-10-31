@@ -8,6 +8,7 @@ from uuid import UUID
 from dateutil.relativedelta import relativedelta
 from fastapi import HTTPException
 from sqlalchemy import and_, asc, desc, func, or_, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.budget_period_models import BudgetPeriod
@@ -120,7 +121,11 @@ class BudgetService:
 
     async def get_budget_period(self, period_id: UUID, user_id: UUID) -> Optional[BudgetPeriod]:
         """Get specific budget period"""
-        query = select(BudgetPeriod).where(and_(BudgetPeriod.id == period_id, BudgetPeriod.user_id == user_id))
+        query = (
+            select(BudgetPeriod)
+            .options(selectinload(BudgetPeriod.transactions))
+            .where(and_(BudgetPeriod.id == period_id, BudgetPeriod.user_id == user_id))
+        )
 
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
@@ -147,7 +152,10 @@ class BudgetService:
         return period
 
     async def complete_budget_period(
-        self, period_id: UUID, user_id: UUID, ended_at: datetime
+        self,
+        user_id: UUID,
+        ended_at: datetime,
+        period_id: Optional[UUID] = None,
     ) -> Optional[BudgetPeriod]:
         """Mark a budget period as completed and calculate carry forward"""
         period = await self.get_budget_period(period_id, user_id)
@@ -164,9 +172,9 @@ class BudgetService:
         await self.db.refresh(period)
 
         # Create next period automatically if this was the current period
-        # if period.ended_at <= datetime.now(timezone.utc):
-        #     await self._create_next_period_if_needed(user_id, period)
-
+        if period.ended_at <= datetime.now(timezone.utc):
+            await self._create_next_period_if_needed(user_id, period)
+        await self.db.refresh(period)
         return period
 
     async def get_period_summary(self, period_id: UUID, user_id: UUID) -> Optional[BudgetPeriodSummary]:
@@ -179,7 +187,7 @@ class BudgetService:
         expense_by_category = await self._get_expense_by_category(period_id)
         top_expenses = await self._get_top_expenses(period_id, limit=5)
         # get priod transactions
-        transactions = await self.get_transactions_for_period(period_id)
+        transactions = period.transactions
 
         return BudgetPeriodSummary.from_budget_period(
             period, expense_by_category=expense_by_category, top_expenses=top_expenses, transactions=transactions
@@ -298,26 +306,27 @@ class BudgetService:
 
     async def _create_next_period_if_needed(self, user_id: UUID, completed_period: BudgetPeriod):
         """Create next period if we're at the end of current period"""
-        next_start_date = completed_period.end_date + relativedelta(days=1)
+        next_start_date = completed_period.ended_at + relativedelta(minute=1)
 
-        # Check if next period already exists
-        existing = await self._check_overlapping_periods(user_id, next_start_date, next_start_date)
-        if existing:
-            return
-
-        # Create next period
-        user = await self.db.get(User, user_id)
-        next_start, next_end = calculate_salary_period(user.salary_day, next_start_date)
-
+        # # Check if next period already exists
+        # existing = await self._check_overlapping_periods(user_id, next_start_date, next_start_date)
+        # if existing:
+        #     return
+        completed_period_id = completed_period.id
+        completed_period = await self.db.get(BudgetPeriod, completed_period_id)
         next_period = BudgetPeriod(
             user_id=user_id,
-            start_date=next_start,
-            end_date=next_end,
+            started_at=next_start_date,
             brought_forward=completed_period.carried_forward,
             status="active",
+            previous_period_id=completed_period.id,
         )
 
         self.db.add(next_period)
+        await self.db.flush()
+
+        completed_period.next_period_id = next_period.id
+
         await self.db.commit()
 
     async def _get_expense_by_category(self, period_id: UUID) -> dict:

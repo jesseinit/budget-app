@@ -27,6 +27,7 @@ async def get_transactions(
     transaction_type: Optional[str] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
+    period_id: Optional[UUID] = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -40,6 +41,7 @@ async def get_transactions(
         transaction_type=transaction_type,
         start_date=start_date,
         end_date=end_date,
+        period_id=period_id,
     )
 
 

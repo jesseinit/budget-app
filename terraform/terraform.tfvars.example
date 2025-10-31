@@ -1,0 +1,23 @@
+# Copy this file to terraform.tfvars and fill in your values
+# Do NOT commit terraform.tfvars to git!
+
+hcloud_token = "your_hetzner_cloud_api_token_here"
+
+project_name = "budget-app"
+
+# Hetzner locations: nbg1 (Nuremberg), fsn1 (Falkenstein), hel1 (Helsinki), ash (Ashburn), hil (Hillsboro)
+location = "nbg1"
+
+# Network zone must match location: eu-central (nbg1/fsn1/hel1), us-east (ash), us-west (hil)
+network_zone = "eu-central"
+
+# Server types: cpx11 (2vCPU/2GB), cpx21 (3vCPU/4GB), cpx31 (4vCPU/8GB)
+master_server_type = "cpx21"
+worker_server_type = "cpx21"
+
+# Your SSH public key (e.g., from ~/.ssh/id_rsa.pub)
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... your-email@example.com"
+
+# Your IP address for SSH access (use /32 for single IP)
+# Find your IP: curl ifconfig.me
+admin_ip = "0.0.0.0/0"  # CHANGE THIS to your actual IP for security!

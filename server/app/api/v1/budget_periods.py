@@ -91,14 +91,14 @@ async def update_budget_period(
 
 @router.post("/{period_id}/complete", response_model=BudgetPeriodResponse)
 async def complete_budget_period(
-    period_id: UUID,
     body: CompletePeriodRequest,
+    period_id: Optional[UUID] = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Complete budget period and calculate final totals"""
     service = BudgetService(db)
-    completed_period = await service.complete_budget_period(period_id, current_user.id, body.ended_at)
+    completed_period = await service.complete_budget_period(current_user.id, body.ended_at, period_id)
     return completed_period
 
 

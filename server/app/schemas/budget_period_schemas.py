@@ -95,9 +95,8 @@ class BudgetPeriodSummary(BudgetPeriodResponse):
 
         # Calculate money used (expenses + savings + investments)
         money_used = period.total_expenses + period.total_savings + period.total_investments
-
         # Calculate net position (what's left over)
-        net_position = available_money - money_used
+        net_position = available_money + money_used
 
         # Calculate savings rate as percentage
         total_saved = period.total_savings + period.total_investments

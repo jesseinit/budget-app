@@ -26,6 +26,7 @@ class TransactionService:
         transaction_type: Optional[str] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        period_id: Optional[UUID] = None,
     ) -> List[Transaction]:
         """Get transactions with filters"""
         query = select(Transaction).options(joinedload(Transaction.category))
@@ -42,6 +43,8 @@ class TransactionService:
             filters.append(Transaction.transacted_at >= start_date)
         if end_date:
             filters.append(Transaction.transacted_at <= end_date)
+        if period_id:
+            filters.append(Transaction.budget_period_id == period_id)
 
         query = query.where(and_(*filters))
         query = query.order_by(desc(Transaction.transacted_at))
@@ -95,7 +98,7 @@ class TransactionService:
         old_period_id = transaction.budget_period_id
 
         # Update fields
-        for field, value in update_data.dict(exclude_unset=True).items():
+        for field, value in update_data.model_dump(exclude_unset=True).items():
             setattr(transaction, field, value)
 
         # Check if we need to move to a different budget period
@@ -139,7 +142,12 @@ class TransactionService:
                 user_id, transaction_data.transacted_at
             )
 
-            transaction = Transaction(user_id=user_id, budget_period_id=budget_period.id, **transaction_data.dict())
+            if transaction_data.type != TransactionType.INCOME:
+                transaction_data.amount = -abs(transaction_data.amount)
+
+            transaction = Transaction(
+                user_id=user_id, budget_period_id=budget_period.id, **transaction_data.model_dump()
+            )
             transactions.append(transaction)
 
         self.db.add_all(transactions)

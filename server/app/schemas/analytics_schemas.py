@@ -38,8 +38,17 @@ class YearlySummary(BaseModel):
     category_breakdown: List[CategoryBreakdown]
 
 
+class InvestmentPerformance(BaseModel):
+    total_invested: Decimal
+    current_value: Decimal
+    profit_loss: Decimal
+    profit_loss_percentage: float
+    # top_investments: List[Dict[str, Any]]  # List of dictionaries with investment details
+
+
 class DashboardSummary(BaseModel):
     current_period: BudgetPeriodResponse
+    investment_performance: InvestmentPerformance
     net_worth: Decimal
     this_month_income: Decimal
     this_month_expenses: Decimal
@@ -54,7 +63,7 @@ class DashboardSummary(BaseModel):
 # Schema for Trading212 account data
 class Trading212AccountData(BaseModel):
     free: Decimal
-    total: Decimal
+    pnl: Decimal
     ppl: Decimal
     result: Decimal
     invested: Decimal

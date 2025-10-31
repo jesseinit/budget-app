@@ -40,3 +40,16 @@ node_modules/
 .tmp/
 dist/
 build/
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfplan
+terraform/terraform.tfvars
+*.auto.tfvars
+
+# Kubeconfig
+*.kubeconfig
+config-budget

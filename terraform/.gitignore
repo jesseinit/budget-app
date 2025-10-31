@@ -1,0 +1,48 @@
+# Terraform files
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfplan
+*.tfstate.*
+
+# Variable files with sensitive data
+terraform.tfvars
+*.auto.tfvars
+
+# Environment files
+.env
+.env.local
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# SSH keys
+*.pem
+*.pub
+id_rsa*
+
+# Kubeconfig files
+kubeconfig*
+*.kubeconfig
+config-budget
+
+# macOS
+.DS_Store
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak

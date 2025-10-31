@@ -10,7 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.models import BudgetPeriod, Category, FinancialGoal, Transaction
-from app.schemas import CategoryBreakdown, DashboardSummary, MonthlyTrend, YearlySummary, Trading212AccountData
+from app.schemas import (
+    CategoryBreakdown,
+    DashboardSummary,
+    MonthlyTrend,
+    YearlySummary,
+    Trading212AccountData,
+    InvestmentPerformance,
+)
 from app.utils.trading import get_trading_212_account_data
 
 logger = logging.getLogger(__name__)
@@ -50,7 +57,7 @@ class AnalyticsService:
 
         return DashboardSummary(
             current_period=current_period,
-            net_worth=net_worth + trading_data.total,
+            net_worth=net_worth + trading_data.pnl,
             this_month_income=month_totals["income"],
             this_month_expenses=month_totals["expenses"],
             this_month_savings=abs(month_totals["savings"]) - abs(month_totals["adjustments"]),
@@ -59,6 +66,14 @@ class AnalyticsService:
             recent_transactions=recent_transactions,
             upcoming_bills=[],  # TODO: Implement recurring transactions
             financial_goals_progress=goals_progress,
+            investment_performance=InvestmentPerformance(
+                total_invested=trading_data.invested,
+                current_value=trading_data.pnl,
+                profit_loss=trading_data.ppl,
+                profit_loss_percentage=(
+                    Decimal(trading_data.ppl / trading_data.invested * 100) if trading_data.invested > 0 else 0
+                ),
+            ),
         )
 
     async def get_yearly_summary(self, user_id: UUID, year: int) -> YearlySummary:
@@ -91,7 +106,7 @@ class AnalyticsService:
         total_expenses = sum(p.total_expenses for p in periods)
         total_savings = sum(p.total_savings for p in periods)
         total_investments = sum(p.total_investments for p in periods)
-        total_adjustments = sum(p.total_adjustments for p in periods or Decimal("0"))
+        total_adjustments = sum(p.total_adjustments for p in periods)
 
         net_savings = abs(total_savings) + abs(total_investments) - abs(total_adjustments)
         savings_rate = self._calculate_savings_rate(total_income, net_savings)
@@ -206,12 +221,12 @@ class AnalyticsService:
         return breakdown
 
     # Helper methods
-    async def _get_trading_212_account_data(self, user_id: str) -> Dict[str, Any]:
+    async def _get_trading_212_account_data(self, user_id: str) -> Trading212AccountData:
         """Fetch Trading212 account data"""
         trading_data = await get_trading_212_account_data(user_id=user_id)
         trading_data = Trading212AccountData(
             free=trading_data.get("free", Decimal("0")),
-            total=trading_data.get("total", Decimal("0")),
+            pnl=trading_data.get("total", Decimal("0")),
             ppl=trading_data.get("ppl", Decimal("0")),
             result=trading_data.get("result", Decimal("0")),
             invested=trading_data.get("invested", Decimal("0")),
