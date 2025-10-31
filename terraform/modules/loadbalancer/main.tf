@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    hcloud = {
+      source  = "hetznercloud/hcloud"
+      version = "~> 1.45"
+    }
+  }
+}
+
 # Load balancer for ingress traffic
 resource "hcloud_load_balancer" "k8s_lb" {
   name               = "${var.project_name}-lb"
@@ -16,19 +25,20 @@ resource "hcloud_load_balancer_network" "k8s_lb_network" {
   network_id       = var.network_id
 }
 
-# HTTP target (port 80)
-resource "hcloud_load_balancer_target" "lb_target" {
+# Load balancer targets (master server)
+resource "hcloud_load_balancer_target" "master" {
   type             = "server"
   load_balancer_id = hcloud_load_balancer.k8s_lb.id
+  server_id        = var.target_servers[0]
+  use_private_ip   = false
+}
 
-  dynamic "server_target" {
-    for_each = var.target_servers
-    content {
-      server_id = server_target.value
-    }
-  }
-
-  use_private_ip = false
+# Load balancer targets (worker server)
+resource "hcloud_load_balancer_target" "worker" {
+  type             = "server"
+  load_balancer_id = hcloud_load_balancer.k8s_lb.id
+  server_id        = var.target_servers[1]
+  use_private_ip   = false
 }
 
 # HTTP service (port 80)

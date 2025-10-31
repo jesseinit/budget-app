@@ -13,7 +13,7 @@ network_zone = "eu-central"
 
 # Server types: cpx11 (2vCPU/2GB), cpx21 (3vCPU/4GB), cpx31 (4vCPU/8GB)
 master_server_type = "cpx21"
-worker_server_type = "cpx21"
+worker_server_type = "cpx31"
 
 # Your SSH public key (e.g., from ~/.ssh/id_rsa.pub)
 ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... your-email@example.com"

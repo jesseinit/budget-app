@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    hcloud = {
+      source  = "hetznercloud/hcloud"
+      version = "~> 1.45"
+    }
+  }
+}
+
 # Private network for cluster communication
 resource "hcloud_network" "k8s_network" {
   name     = "${var.project_name}-network"

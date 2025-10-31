@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    hcloud = {
+      source  = "hetznercloud/hcloud"
+      version = "~> 1.45"
+    }
+  }
+}
+
 # SSH key for server access
 resource "hcloud_ssh_key" "k8s_key" {
   name       = "${var.project_name}-key"
