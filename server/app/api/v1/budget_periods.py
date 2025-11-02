@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user_models import User
+from app.schemas import ApiResponse, PaginatedApiResponse, ResponseMeta
 from app.schemas.budget_period_schemas import (
     BudgetPeriodCreate,
     BudgetPeriodResponse,
@@ -21,7 +22,7 @@ from app.services.budget_service import BudgetService
 router = APIRouter()
 
 
-@router.get("/", response_model=List[BudgetPeriodResponse])
+@router.get("/", response_model=ApiResponse[List[BudgetPeriodResponse]])
 async def get_budget_periods(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
@@ -31,10 +32,11 @@ async def get_budget_periods(
 ):
     """Get user's budget periods"""
     service = BudgetService(db)
-    return await service.get_budget_periods(user_id=current_user.id, skip=skip, limit=limit, status=status)
+    periods = await service.get_budget_periods(user_id=current_user.id, skip=skip, limit=limit, status=status)
+    return ApiResponse(result=periods)
 
 
-@router.get("/current", response_model=BudgetPeriodSummary)
+@router.get("/current", response_model=ApiResponse[BudgetPeriodSummary])
 async def get_current_period(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """Get current active budget period with summary"""
     service = BudgetService(db)
@@ -44,12 +46,11 @@ async def get_current_period(current_user: User = Depends(get_current_user), db:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No active budget period found. Please create a new budget period.",
         )
-        # # Auto-create current period if it doesn't exist
-        # period = await service.create_current_period(current_user.id)
-    return await service.get_period_summary(period.id, current_user.id)
+    summary = await service.get_period_summary(period.id, current_user.id)
+    return ApiResponse(result=summary)
 
 
-@router.post("/", response_model=BudgetPeriodResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ApiResponse[BudgetPeriodResponse], status_code=status.HTTP_201_CREATED)
 async def create_budget_period(
     period: BudgetPeriodCreate,
     current_user: User = Depends(get_current_user),
@@ -57,10 +58,11 @@ async def create_budget_period(
 ):
     """Create a new budget period"""
     service = BudgetService(db)
-    return await service.create_budget_period(current_user.id, period)
+    new_period = await service.create_budget_period(current_user.id, period)
+    return ApiResponse(result=new_period)
 
 
-@router.get("/{period_id}", response_model=BudgetPeriodSummary)
+@router.get("/{period_id}", response_model=ApiResponse[BudgetPeriodSummary])
 async def get_budget_period(
     period_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -71,10 +73,11 @@ async def get_budget_period(
     period = await service.get_budget_period(period_id, current_user.id)
     if not period:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget period not found")
-    return await service.get_period_summary(period_id, current_user.id)
+    summary = await service.get_period_summary(period_id, current_user.id)
+    return ApiResponse(result=summary)
 
 
-@router.put("/{period_id}", response_model=BudgetPeriodResponse)
+@router.put("/{period_id}", response_model=ApiResponse[BudgetPeriodResponse])
 async def update_budget_period(
     period_id: UUID,
     period_update: BudgetPeriodUpdate,
@@ -86,10 +89,10 @@ async def update_budget_period(
     updated_period = await service.update_budget_period(period_id, current_user.id, period_update)
     if not updated_period:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget period not found")
-    return updated_period
+    return ApiResponse(result=updated_period)
 
 
-@router.post("/{period_id}/complete", response_model=BudgetPeriodResponse)
+@router.post("/{period_id}/complete", response_model=ApiResponse[BudgetPeriodResponse])
 async def complete_budget_period(
     body: CompletePeriodRequest,
     period_id: Optional[UUID] = None,
@@ -99,11 +102,10 @@ async def complete_budget_period(
     """Complete budget period and calculate final totals"""
     service = BudgetService(db)
     completed_period = await service.complete_budget_period(current_user.id, body.ended_at, period_id)
-    return completed_period
+    return ApiResponse(result=completed_period)
 
 
-# Two endpoints that bulk rebuild pudget periods, it takes list periods ids
-@router.post("/rebuild", response_model=List[BudgetPeriodResponse])
+@router.post("/rebuild", response_model=ApiResponse[List[BudgetPeriodResponse]])
 async def rebuild_budget_periods(
     period_ids: BulkRebuildRequest,
     current_user: User = Depends(get_current_user),
@@ -112,4 +114,7 @@ async def rebuild_budget_periods(
     """Rebuild budget periods from a list of IDs"""
     service = BudgetService(db)
     rebuilt_periods = await service.rebuild_budget_periods(period_ids.period_ids, current_user.id)
-    return rebuilt_periods
+    return ApiResponse(
+        result=rebuilt_periods,
+        meta=ResponseMeta(message=f"Successfully rebuilt {len(rebuilt_periods)} budget periods")
+    )

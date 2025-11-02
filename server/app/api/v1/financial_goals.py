@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user_models import User
+from app.schemas import ApiResponse, MessageResponse
 from app.schemas.financial_goal_schemas import (
     FinancialGoalCreate,
     FinancialGoalResponse,
@@ -17,7 +18,7 @@ from app.services.financial_goal_service import FinancialGoalService
 router = APIRouter()
 
 
-@router.get("/", response_model=List[FinancialGoalResponse])
+@router.get("/", response_model=ApiResponse[List[FinancialGoalResponse]])
 async def get_financial_goals(
     is_active: Optional[bool] = Query(True, description="Filter by active status"),
     current_user: User = Depends(get_current_user),
@@ -25,10 +26,11 @@ async def get_financial_goals(
 ):
     """Get user's financial goals"""
     service = FinancialGoalService(db)
-    return await service.get_financial_goals(current_user.id, is_active)
+    goals = await service.get_financial_goals(current_user.id, is_active)
+    return ApiResponse(result=goals)
 
 
-@router.post("/", response_model=FinancialGoalResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ApiResponse[FinancialGoalResponse], status_code=status.HTTP_201_CREATED)
 async def create_financial_goal(
     goal: FinancialGoalCreate,
     current_user: User = Depends(get_current_user),
@@ -36,10 +38,11 @@ async def create_financial_goal(
 ):
     """Create a new financial goal"""
     service = FinancialGoalService(db)
-    return await service.create_financial_goal(current_user.id, goal)
+    new_goal = await service.create_financial_goal(current_user.id, goal)
+    return ApiResponse(result=new_goal)
 
 
-@router.get("/{goal_id}", response_model=FinancialGoalResponse)
+@router.get("/{goal_id}", response_model=ApiResponse[FinancialGoalResponse])
 async def get_financial_goal(
     goal_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -50,10 +53,10 @@ async def get_financial_goal(
     goal = await service.get_financial_goal(goal_id, current_user.id)
     if not goal:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Financial goal not found")
-    return goal
+    return ApiResponse(result=goal)
 
 
-@router.put("/{goal_id}", response_model=FinancialGoalResponse)
+@router.put("/{goal_id}", response_model=ApiResponse[FinancialGoalResponse])
 async def update_financial_goal(
     goal_id: UUID,
     goal_update: FinancialGoalUpdate,
@@ -65,10 +68,10 @@ async def update_financial_goal(
     updated_goal = await service.update_financial_goal(goal_id, current_user.id, goal_update)
     if not updated_goal:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Financial goal not found")
-    return updated_goal
+    return ApiResponse(result=updated_goal)
 
 
-@router.delete("/{goal_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{goal_id}", response_model=ApiResponse[MessageResponse])
 async def delete_financial_goal(
     goal_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -79,9 +82,15 @@ async def delete_financial_goal(
     success = await service.delete_financial_goal(goal_id, current_user.id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Financial goal not found")
+    return ApiResponse(
+        result=MessageResponse(
+            message="Financial goal deleted successfully",
+            details={"goal_id": str(goal_id)}
+        )
+    )
 
 
-@router.patch("/{goal_id}/contribute")
+@router.patch("/{goal_id}/contribute", response_model=ApiResponse[MessageResponse])
 async def contribute_to_goal(
     goal_id: UUID,
     amount: float,
@@ -93,8 +102,13 @@ async def contribute_to_goal(
     updated_goal = await service.add_contribution(goal_id, current_user.id, amount)
     if not updated_goal:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Financial goal not found")
-    return {
-        "message": "Contribution added successfully",
-        "new_amount": updated_goal.current_amount,
-        "progress": (updated_goal.current_amount / updated_goal.target_amount) * 100,
-    }
+    return ApiResponse(
+        result=MessageResponse(
+            message="Contribution added successfully",
+            details={
+                "goal_id": str(goal_id),
+                "new_amount": updated_goal.current_amount,
+                "progress": (updated_goal.current_amount / updated_goal.target_amount) * 100,
+            }
+        )
+    )

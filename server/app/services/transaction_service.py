@@ -2,7 +2,7 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import and_, desc, select
+from sqlalchemy import and_, desc, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -52,6 +52,38 @@ class TransactionService:
 
         result = await self.db.execute(query)
         return result.scalars().all()
+
+    async def count_transactions(
+        self,
+        user_id: UUID,
+        category_id: Optional[UUID] = None,
+        transaction_type: Optional[str] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        period_id: Optional[UUID] = None,
+    ) -> int:
+        """Count transactions with filters"""
+        query = select(func.count(Transaction.id))
+
+        # Base filter for user
+        filters = [Transaction.user_id == user_id]
+
+        # Apply additional filters
+        if category_id:
+            filters.append(Transaction.category_id == category_id)
+        if transaction_type:
+            filters.append(Transaction.type == transaction_type)
+        if start_date:
+            filters.append(Transaction.transacted_at >= start_date)
+        if end_date:
+            filters.append(Transaction.transacted_at <= end_date)
+        if period_id:
+            filters.append(Transaction.budget_period_id == period_id)
+
+        query = query.where(and_(*filters))
+
+        result = await self.db.execute(query)
+        return result.scalar() or 0
 
     async def create_transaction(self, user_id: UUID, transaction_data: TransactionCreate) -> Transaction:
         """Create a new transaction"""
