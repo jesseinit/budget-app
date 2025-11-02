@@ -42,3 +42,8 @@ output "ssh_workers" {
   description = "SSH commands for worker nodes"
   value       = [for ip in module.k8s_cluster.worker_ips : "ssh root@${ip}"]
 }
+
+output "worker_count" {
+  description = "Number of worker nodes"
+  value       = var.worker_count
+}

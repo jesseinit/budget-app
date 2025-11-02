@@ -64,6 +64,14 @@ tf-destroy: ## Destroy infrastructure with Terraform
 		echo "Destroy cancelled."; \
 	fi
 
+cleanup-volumes: ## Clean up orphaned Hetzner Cloud volumes (interactive)
+	@echo "Cleaning up orphaned Hetzner Cloud volumes..."
+	@cd $(SCRIPTS_DIR) && ./cleanup-orphaned-volumes.sh
+
+cleanup-volumes-auto: ## Auto clean up orphaned volumes (no confirmation)
+	@echo "Auto-cleaning orphaned Hetzner Cloud volumes..."
+	@cd $(SCRIPTS_DIR) && ./cleanup-orphaned-volumes-auto.sh
+
 clean: ## Clean up local files (kubeconfig, terraform state backups)
 	@echo "Cleaning up local files..."
 	@rm -f $(KUBECONFIG_FILE)

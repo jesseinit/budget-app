@@ -145,8 +145,17 @@ done
 echo ""
 echo "Waiting for all worker nodes to be ready..."
 
+# Get worker count from Terraform configuration
+WORKER_COUNT=$(terraform -chdir=.. output -json worker_count 2>/dev/null | jq -r '.' || echo "1")
+if [ -z "$WORKER_COUNT" ] || [ "$WORKER_COUNT" = "null" ]; then
+  # Fallback: count actual worker IPs
+  WORKER_COUNT=$(echo "$WORKER_IPS" | wc -w | tr -d ' ')
+fi
+
 # Wait for all nodes to be in Ready state
-EXPECTED_NODES=3  # 1 master + 2 workers
+EXPECTED_NODES=$((1 + WORKER_COUNT))  # 1 master + N workers
+echo "Expecting $EXPECTED_NODES nodes (1 master + $WORKER_COUNT workers)..."
+
 MAX_RETRIES=30
 RETRY_COUNT=0
 RETRY_DELAY=3

@@ -14,10 +14,35 @@ spec:
         - budget-api.jesseinit.dev
       secretName: jesseinit-dev-tls
   rules:
-    # Frontend on main domain
+    # Frontend on main domain with /docs routed to backend
     - host: budget.jesseinit.dev
       http:
         paths:
+          # API docs served from backend
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8000
+          # ReDoc also served from backend
+          - path: /redoc
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8000
+          # OpenAPI schema
+          - path: /openapi.json
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8000
+          # Frontend for everything else
           - path: /
             pathType: Prefix
             backend:

@@ -8,6 +8,15 @@ terraform {
 }
 
 # Load balancer for ingress traffic
+# NOTE: Hetzner Cloud Load Balancers get a persistent public IP that stays the same
+# as long as the load balancer exists. The IP is assigned automatically during creation.
+# Floating IPs are NOT supported for load balancers (only for servers).
+#
+# To get a predictable/static IP:
+# 1. Create the LB once with Terraform
+# 2. Note the IP from terraform output
+# 3. Configure your DNS to point to that IP
+# 4. The IP will remain the same as long as you don't destroy the LB
 resource "hcloud_load_balancer" "k8s_lb" {
   name               = "${var.project_name}-lb"
   load_balancer_type = "lb11"
