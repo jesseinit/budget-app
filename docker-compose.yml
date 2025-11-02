@@ -32,6 +32,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://budgetuser:budgetpass@db:5432/budgetdb
       REDIS_URL: redis://redis:6379
+      POSTGRES_HOST: db
     depends_on:
       db:
         condition: service_healthy
@@ -40,7 +41,8 @@ services:
     volumes:
       - ./server:/code
       - server_venv:/code/.venv
-    # command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=./app/log_conf.yaml
+    entrypoint: [] # Override default entrypoint if any
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=./app/log_conf.yaml
     tty: true
     stdin_open: true
   

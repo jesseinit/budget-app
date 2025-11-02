@@ -40,47 +40,12 @@ spec:
           ports:
             - containerPort: 8000
               name: http
+          envFrom:
+            - configMapRef:
+                name: budget-app-config
+            - secretRef:
+                name: budget-app-secrets
           env:
-            - name: POSTGRES_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: budget-app-secrets
-                  key: POSTGRES_HOST
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: budget-app-secrets
-                  key: DATABASE_URL
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: budget-app-secrets
-                  key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: budget-app-secrets
-                  key: POSTGRES_PASSWORD
-            - name: POSTGRES_DB
-              valueFrom:
-                secretKeyRef:
-                  name: budget-app-secrets
-                  key: POSTGRES_DB
-            - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: budget-app-secrets
-                  key: REDIS_URL
-            - name: SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: budget-app-secrets
-                  key: SECRET_KEY
-            - name: TRADING212_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: budget-app-secrets
-                  key: TRADING212_API_KEY
             - name: ENVIRONMENT
               value: "production"
           resources:
