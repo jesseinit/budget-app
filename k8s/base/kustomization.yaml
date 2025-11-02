@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: budget-app
+
+resources:
+  - namespace.yaml
+  - ghcr-secret.yaml
+  - sealed-secrets.yaml
+  - postgres-statefulset.yaml
+  - redis-statefulset.yaml
+  - frontend-deployment.yaml
+  - backend-deployment.yaml
+  - ingress.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: budget-app
+      app.kubernetes.io/managed-by: kustomize

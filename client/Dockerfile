@@ -1,24 +1,24 @@
-# Use a lightweight Node.js image
+# Production build
 FROM node:22.17-alpine
 
-# Set working directory
 WORKDIR /code
 
-# Remove lock and node_modules if present
-RUN rm -rf node_modules package-lock.json
-
-# Copy package.json and package-lock.json (if available)
-COPY package.json ./
-# If you have a lock file, uncomment the next line
-# COPY package-lock.json ./
+# Copy package files
+COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
-# Copy the rest of the app
+# Copy source code
 COPY . .
 
-EXPOSE 5173
+# Build for production
+RUN npm run build
 
-# Start the app in dev mode
-CMD ["npm", "run", "dev"]
+# Install serve to run the production build
+RUN npm install -g serve
+
+EXPOSE 80
+
+# Serve the built app
+CMD ["serve", "-s", "dist", "-l", "80"]

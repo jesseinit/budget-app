@@ -40,12 +40,14 @@ services:
     volumes:
       - ./server:/code
       - server_venv:/code/.venv
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=./app/log_conf.yaml
+    # command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=./app/log_conf.yaml
     tty: true
     stdin_open: true
   
   client:
-    build: ./client
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
     ports:
       - "5173:5173"
     volumes:

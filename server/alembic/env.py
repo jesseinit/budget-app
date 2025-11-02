@@ -21,7 +21,8 @@ import app.models  # This imports __init__.py which imports all models
 # from app.models import *
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Note: We don't set sqlalchemy.url here because it can cause issues with URL-encoded passwords
+# The URL is set directly in run_async_migrations() instead
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -30,7 +31,8 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
+    # Use DATABASE_URL directly from settings to avoid ConfigParser interpolation issues
+    url = settings.DATABASE_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,

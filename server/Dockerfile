@@ -28,8 +28,11 @@ RUN uv venv .venv && uv sync --no-install-project
 # Copy the rest of the application
 COPY . .
 
+# Make entrypoint script executable
+RUN chmod +x /code/entrypoint.sh
+
 ENV VIRTUAL_ENV=/code/.venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Start the application
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# Use the entrypoint script
+ENTRYPOINT ["/code/entrypoint.sh"]

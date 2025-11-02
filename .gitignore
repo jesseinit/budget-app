@@ -18,6 +18,7 @@ venv/
 ENV/
 
 # IDE files
+.claude
 .vscode/
 .idea/
 *.swp
@@ -41,15 +42,24 @@ node_modules/
 dist/
 build/
 
-# Terraform
-terraform/.terraform/
-terraform/.terraform.lock.hcl
-terraform/terraform.tfstate
-terraform/terraform.tfstate.backup
-terraform/*.tfplan
-terraform/terraform.tfvars
+# Terraform / Infrastructure as Code
+iac/.terraform/
+iac/.terraform.lock.hcl
+iac/terraform.tfstate
+iac/terraform.tfstate.backup
+iac/*.tfplan
+iac/terraform.tfvars
 *.auto.tfvars
 
 # Kubeconfig
 *.kubeconfig
 config-budget
+
+# Kubernetes secrets (never commit actual secrets)
+k8s/base/secrets.yaml
+k8s/overlays/*/secrets.yaml
+
+# Sealed Secrets are safe to commit (they're encrypted)
+# But exclude the private key if you ever download it
+sealed-secrets-key.yaml
+.sealed-secrets-keys/

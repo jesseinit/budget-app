@@ -21,7 +21,7 @@ The deployment uses:
 brew install terraform kubectl helm hcloud
 
 # Linux
-# Install Terraform: https://learn.hashicorp.com/tutorials/terraform/install-cli
+# Install Terraform: https://learn.hashicorp.com/tutorials/iac/install-cli
 # Install kubectl: https://kubernetes.io/docs/tasks/tools/
 ```
 
@@ -39,17 +39,17 @@ Build and push your Docker images to a registry:
 ```bash
 # Option 1: Docker Hub
 docker login
-docker build -t yourusername/budget-server:v1.0.0 ./server
-docker build -t yourusername/budget-client:v1.0.0 ./client
-docker push yourusername/budget-server:v1.0.0
-docker push yourusername/budget-client:v1.0.0
+docker build -t jesseinit/budget-server:v1.0.0 ./server
+docker build -t jesseinit/budget-client:v1.0.0 ./client
+docker push jesseinit/budget-server:v1.0.0
+docker push jesseinit/budget-client:v1.0.0
 
 # Option 2: GitHub Container Registry
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
-docker build -t ghcr.io/yourusername/budget-server:v1.0.0 ./server
-docker build -t ghcr.io/yourusername/budget-client:v1.0.0 ./client
-docker push ghcr.io/yourusername/budget-server:v1.0.0
-docker push ghcr.io/yourusername/budget-client:v1.0.0
+docker build -t ghcr.io/jesseinit/budget-server:v1.0.0 ./server
+docker build -t ghcr.io/jesseinit/budget-client:v1.0.0 ./client
+docker push ghcr.io/jesseinit/budget-server:v1.0.0
+docker push ghcr.io/jesseinit/budget-client:v1.0.0
 ```
 
 ## Deployment Steps
@@ -57,7 +57,7 @@ docker push ghcr.io/yourusername/budget-client:v1.0.0
 ### Phase 1: Infrastructure Provisioning
 
 ```bash
-cd terraform
+cd iac
 
 # 1. Configure variables
 cp terraform.tfvars.example terraform.tfvars
@@ -81,7 +81,7 @@ terraform apply
 
 ```bash
 # Fetch kubeconfig
-cd terraform/scripts
+cd iac/scripts
 ./get-kubeconfig.sh
 
 # Set environment variable
@@ -162,7 +162,7 @@ kubectl describe ingress budget-app-ingress -n budget-app
 
 ```bash
 # Master node
-cd terraform/scripts
+cd iac/scripts
 ./ssh-master.sh
 
 # Worker node
@@ -226,7 +226,7 @@ kubectl get pods -n ingress-nginx
 kubectl describe ingress budget-app-ingress -n budget-app
 
 # Test from master node
-ssh root@$(cd terraform && terraform output -raw master_ip)
+ssh root@$(cd iac && terraform output -raw master_ip)
 curl http://localhost
 ```
 
@@ -283,7 +283,7 @@ hcloud volume create-from-snapshot <snapshot-id> \
 kubectl delete namespace budget-app
 
 # Destroy infrastructure
-cd terraform/scripts
+cd iac/scripts
 ./destroy-cluster.sh
 
 # Clean up local files
@@ -319,11 +319,11 @@ rm ~/.kube/config-budget
 
 ## Resources
 
-- [Terraform Code](./terraform/)
+- [Terraform Code](./iac/)
 - [Hetzner Cloud Docs](https://docs.hetzner.com/cloud/)
 - [k3s Documentation](https://docs.k3s.io/)
 - [Kubernetes Docs](https://kubernetes.io/docs/)
 
 ---
 
-For infrastructure-specific details, see [terraform/README.md](./terraform/README.md)
+For infrastructure-specific details, see [iac/README.md](./iac/README.md)
