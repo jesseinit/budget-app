@@ -6,8 +6,9 @@ namespace: budget-app
 resources:
   - namespace.yaml
   - ghcr-secret.yaml
-  - sealed-secrets.yaml
-  - config-maps.yaml
+  - secrets-backend.yaml
+  - config-maps-backend.yaml
+  - config-maps-frontend.yaml
   - postgres-statefulset.yaml
   - redis-statefulset.yaml
   - frontend-deployment.yaml

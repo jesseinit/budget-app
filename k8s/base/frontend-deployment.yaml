@@ -8,10 +8,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: 80
-    protocol: TCP
-    name: http
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
   selector:
     app: frontend
 
@@ -32,33 +32,33 @@ spec:
         app: frontend
     spec:
       imagePullSecrets:
-      - name: ghcr-secret
+        - name: ghcr-secret
       containers:
-      - name: frontend
-        image: ghcr.io/jesseinit/budget-client:v1.0.0
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 80
-          name: http
-        env:
-        - name: REACT_APP_API_URL
-          value: "http://backend-service:8000"
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: frontend
+          image: ghcr.io/jesseinit/budget-client:v1.0.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+          envFrom:
+            - configMapRef:
+                name: budget-app-config-frontend
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5

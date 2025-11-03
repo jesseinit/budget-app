@@ -78,4 +78,21 @@ clean: ## Clean up local files (kubeconfig, terraform state backups)
 	@cd $(IAC_DIR) && rm -f terraform.tfstate.backup
 	@echo "Clean complete"
 
+build-client: ## Build and push client Docker image
+	@echo "Building and pushing client image..."
+	docker buildx build --platform linux/amd64 -t ghcr.io/jesseinit/budget-client:v1.0.0 --push client/
+
+build-api: ## Build and push API Docker image
+	@echo "Building and pushing API image..."
+	docker buildx build --platform linux/amd64 -t ghcr.io/jesseinit/budget-api:v1.0.0 --push server/
+
+build-all: ## Build and push both client and API Docker images
+	@echo "Building and pushing all images..."
+	@$(MAKE) build-client
+	@$(MAKE) build-api
+
+deploy: ## Deploy Kubernetes resources from k8s/base
+	@echo "Deploying Kubernetes resources..."
+	kubectl apply -k k8s/base/
+
 .DEFAULT_GOAL := help

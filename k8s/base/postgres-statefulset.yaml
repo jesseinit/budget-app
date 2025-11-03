@@ -40,17 +40,17 @@ spec:
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: budget-app-secrets
+              name: budget-app-secrets-backend
               key: POSTGRES_USER
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: budget-app-secrets
+              name: budget-app-secrets-backend
               key: POSTGRES_PASSWORD
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: budget-app-secrets
+              name: budget-app-secrets-backend
               key: POSTGRES_DB
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata

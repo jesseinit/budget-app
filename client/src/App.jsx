@@ -1,34 +1,86 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
+import Login from './components/Login'
+import UserProfile from './components/UserProfile'
+import OAuthCallback from './pages/OAuthCallback'
+import { authService } from './services/authService'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const location = useLocation()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      // Skip fetching user if on callback page (it handles auth itself)
+      if (location.pathname === '/auth/callback') {
+        setLoading(false)
+        return
+      }
+
+      // Check if user is authenticated
+      if (!authService.isAuthenticated()) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        // Fetch user profile
+        const profile = await authService.getUserProfile()
+        setUser(profile)
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error)
+        // Clear invalid token
+        localStorage.removeItem('access_token')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUser()
+  }, [location.pathname])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg">
+            <svg
+              className="h-12 w-12 animate-spin text-blue-600"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          </div>
+          <p className="text-lg font-medium text-gray-700">Loading Budget App...</p>
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <div className="h-2 w-2 animate-bounce rounded-full bg-blue-600 [animation-delay:-0.3s]" />
+            <div className="h-2 w-2 animate-bounce rounded-full bg-blue-600 [animation-delay:-0.15s]" />
+            <div className="h-2 w-2 animate-bounce rounded-full bg-blue-600" />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <Routes>
+      <Route path="/auth/callback" element={<OAuthCallback />} />
+      <Route path="/" element={user ? <UserProfile user={user} /> : <Login />} />
+    </Routes>
   )
 }
 

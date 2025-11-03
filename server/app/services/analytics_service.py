@@ -31,6 +31,7 @@ class AnalyticsService:
         """Get comprehensive dashboard summary"""
         # Get current period
         current_period = await self._get_current_period(user_id)
+        logger.info(f"Current Period: {current_period}")
 
         # Calculate total balance
         net_worth = await self._calculate_total_balance(user_id)
@@ -262,27 +263,20 @@ class AnalyticsService:
         result = await self.db.execute(query)
         periods = result.scalars().all()
 
-        kw = {
-            "total_brought_forward": sum(p.brought_forward for p in periods) or Decimal("0"),
-            "total_actual_income": sum(p.actual_income for p in periods) or Decimal("0"),
-            "total_expenses": sum(p.total_expenses for p in periods) or Decimal("0"),
-            "total_savings": sum(p.total_savings for p in periods) or Decimal("0"),
-            "total_investments": sum(p.total_investments for p in periods) or Decimal("0"),
-            "total_adjustments": sum(p.total_adjustments for p in periods or Decimal("0")),
-        }
+        # kw = {
+        #     "total_brought_forward": sum(p.brought_forward for p in periods) or Decimal("0"),
+        #     "total_actual_income": sum(p.actual_income for p in periods) or Decimal("0"),
+        #     "total_expenses": sum(p.total_expenses for p in periods) or Decimal("0"),
+        #     "total_savings": sum(p.total_savings for p in periods) or Decimal("0"),
+        #     "total_investments": sum(p.total_investments for p in periods) or Decimal("0"),
+        #     "total_adjustments": sum(p.total_adjustments for p in periods) or Decimal("0"),
+        # }
 
-        print(kw)
+        # print(kw)
 
         total_balance = Decimal("0")
         for period in periods:
-            period_balance = (
-                # period.actual_income
-                # - abs(period.total_expenses)
-                abs(period.total_savings)
-                + abs(period.total_investments)
-                - abs(period.total_adjustments)
-                # + period.carried_forward
-            )
+            period_balance = abs(period.total_savings) + abs(period.total_investments) - abs(period.total_adjustments)
             total_balance += period_balance
 
         return total_balance

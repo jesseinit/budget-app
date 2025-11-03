@@ -37,10 +37,6 @@ async def google_callback(
     if not code:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Authorization code is required")
 
-    # In production, verify the state parameter here
-    # if state != stored_state:
-    #     raise HTTPException(status_code=400, detail="Invalid state parameter")
-
     auth_service = AuthService(db)
     try:
         token = await auth_service.handle_google_callback(code)
@@ -65,10 +61,7 @@ async def logout(current_user: User = Depends(get_current_user), db: AsyncSessio
     """Logout user"""
     # In a real implementation, you might want to blacklist the token
     return ApiResponse(
-        result=MessageResponse(
-            message="Successfully logged out",
-            details={"user_id": str(current_user.id)}
-        )
+        result=MessageResponse(message="Successfully logged out", details={"user_id": str(current_user.id)})
     )
 
 

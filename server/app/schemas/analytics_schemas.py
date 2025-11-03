@@ -47,7 +47,7 @@ class InvestmentPerformance(BaseModel):
 
 
 class DashboardSummary(BaseModel):
-    current_period: BudgetPeriodResponse
+    current_period: BudgetPeriodResponse | None
     investment_performance: InvestmentPerformance
     net_worth: Decimal
     this_month_income: Decimal
