@@ -35,7 +35,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: backend
-          image: ghcr.io/jesseinit/budget-server:v1.0.0
+          image: ghcr.io/jesseinit/budget-server:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

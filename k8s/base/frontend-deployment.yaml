@@ -35,7 +35,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: frontend
-          image: ghcr.io/jesseinit/budget-client:v1.0.0
+          image: ghcr.io/jesseinit/budget-client:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80

@@ -1,0 +1,106 @@
+name: 🚀 Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_CLIENT: ${{ github.repository_owner }}/budget-client
+  IMAGE_NAME_SERVER: ${{ github.repository_owner }}/budget-server
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Extract metadata for client
+        id: meta-client
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_CLIENT }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: 🎨 Build and push client image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-client.outputs.tags }}
+          labels: ${{ steps.meta-client.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🏷️ Extract metadata for server
+        id: meta-server
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SERVER }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: 🐍 Build and push server image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-server.outputs.tags }}
+          labels: ${{ steps.meta-server.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: ⚙️ Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: 🔑 Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: 🚀 Deploy to Kubernetes
+        run: |
+          echo "📦 Applying Kubernetes manifests..."
+          kubectl apply -k k8s/base/
+          echo "🔄 Restarting deployments..."
+          kubectl rollout restart deployment/backend -n budget-app
+          kubectl rollout restart deployment/frontend -n budget-app
+
+      - name: ⏳ Wait for deployments
+        run: |
+          echo "⏳ Waiting for backend deployment..."
+          kubectl rollout status deployment/backend -n budget-app --timeout=5m
+          echo "⏳ Waiting for frontend deployment..."
+          kubectl rollout status deployment/frontend -n budget-app --timeout=5m
+
+      - name: ✅ Verify deployment
+        run: |
+          echo "📊 Checking pod status..."
+          kubectl get pods -n budget-app
+          echo "🌐 Checking service status..."
+          kubectl get services -n budget-app
+          echo "✨ Deployment completed successfully!"
