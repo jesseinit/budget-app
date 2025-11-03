@@ -84,7 +84,7 @@ build-client: ## Build and push client Docker image
 
 build-api: ## Build and push API Docker image
 	@echo "Building and pushing API image..."
-	docker buildx build --platform linux/amd64 -t ghcr.io/jesseinit/budget-api:v1.0.0 --push server/
+	docker buildx build --platform linux/amd64 -t ghcr.io/jesseinit/budget-server:v1.0.0 --push server/
 
 build-all: ## Build and push both client and API Docker images
 	@echo "Building and pushing all images..."
@@ -94,5 +94,12 @@ build-all: ## Build and push both client and API Docker images
 deploy: ## Deploy Kubernetes resources from k8s/base
 	@echo "Deploying Kubernetes resources..."
 	kubectl apply -k k8s/base/
+	@echo "Restarting deployments..."
+	kubectl rollout restart deployment/backend -n budget-app
+	kubectl rollout restart deployment/frontend -n budget-app
+	@echo "Waiting for deployments to be ready..."
+	kubectl rollout status deployment/backend -n budget-app
+	kubectl rollout status deployment/frontend -n budget-app
+	@echo "Deployment complete!"
 
 .DEFAULT_GOAL := help

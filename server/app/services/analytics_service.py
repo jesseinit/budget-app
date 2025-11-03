@@ -263,17 +263,6 @@ class AnalyticsService:
         result = await self.db.execute(query)
         periods = result.scalars().all()
 
-        # kw = {
-        #     "total_brought_forward": sum(p.brought_forward for p in periods) or Decimal("0"),
-        #     "total_actual_income": sum(p.actual_income for p in periods) or Decimal("0"),
-        #     "total_expenses": sum(p.total_expenses for p in periods) or Decimal("0"),
-        #     "total_savings": sum(p.total_savings for p in periods) or Decimal("0"),
-        #     "total_investments": sum(p.total_investments for p in periods) or Decimal("0"),
-        #     "total_adjustments": sum(p.total_adjustments for p in periods) or Decimal("0"),
-        # }
-
-        # print(kw)
-
         total_balance = Decimal("0")
         for period in periods:
             period_balance = abs(period.total_savings) + abs(period.total_investments) - abs(period.total_adjustments)

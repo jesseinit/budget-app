@@ -28,4 +28,4 @@ async def get_trading_212_account_data(user_id: str) -> dict:
             await redis_service.setex(cache_key, 120, data)
             return data
         else:
-            raise Exception(f"Error fetching data: {response.status_code} - {response.text}")
+            return {}
