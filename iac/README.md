@@ -1,327 +1,375 @@
-# Budget App - Kubernetes Infrastructure on Hetzner Cloud
+# Budget App - Infrastructure as Code
 
-This Terraform configuration provisions a production-ready Kubernetes cluster on Hetzner Cloud for the Budget App.
+This directory contains infrastructure configurations for deploying the Budget App in different environments.
 
-## Architecture
+## Directory Structure
 
-- **1 Master Node**: k3s control plane (CPX21: 3 vCPU, 4GB RAM)
-- **1 Worker Node**: k3s agent for workloads (CPX21: 3 vCPU, 4GB RAM)
-- **Private Network**: 10.0.0.0/16 for secure inter-node communication
-- **Load Balancer**: Hetzner LB11 for ingress traffic
-- **Storage**: Hetzner CSI driver for dynamic volume provisioning
-- **Ingress**: Nginx Ingress Controller
+```
+iac/
+├── hetzner/          # Production/staging deployment on Hetzner Cloud
+│   ├── main.tf       # Terraform main configuration
+│   ├── variables.tf  # Terraform variables
+│   ├── outputs.tf    # Terraform outputs
+│   ├── modules/      # Terraform modules (network, k8s-cluster, loadbalancer)
+│   ├── scripts/      # Helper scripts for cluster management
+│   └── README.md     # Hetzner-specific documentation
+│
+├── kind/             # Local development with Kind (Kubernetes in Docker)
+│   ├── kind-config.yaml       # Kind cluster configuration
+│   ├── scripts/               # Setup and management scripts
+│   │   ├── setup-cluster.sh   # Create and configure local cluster
+│   │   └── destroy-cluster.sh # Destroy local cluster
+│   └── README.md              # Kind-specific documentation
+│
+└── README.md         # This file
+```
+
+## Environments
+
+### 🏠 Local Development (Kind)
+
+**Use Case**: Local development, testing, and experimentation
+
+- **Location**: Your local machine
+- **Cost**: Free (uses Docker)
+- **Setup Time**: ~2 minutes
+- **Resources**: 2 nodes (1 control-plane + 1 worker)
+- **Storage**: Local Docker volumes
+- **Access**: localhost:6080/6443
+- **Secrets**: Sealed-secrets via Helm (auto-configured)
+
+**Quick Start:**
+```bash
+cd kind/scripts
+./setup-cluster.sh
+export KUBECONFIG=~/.kube/config-budget-local
+kubectl get nodes
+```
+
+**Documentation**: [kind/README.md](kind/README.md)
+
+---
+
+### ☁️ Cloud Production (Hetzner)
+
+**Use Case**: Production, staging, and production-like testing
+
+- **Location**: Hetzner Cloud (Germany/Finland datacenters)
+- **Cost**: ~€22-23/month
+- **Setup Time**: ~5-10 minutes
+- **Resources**: 2 CPX21 servers (3 vCPU, 4GB RAM each)
+- **Storage**: Hetzner Cloud Volumes with CSI driver
+- **Access**: Public IP via Load Balancer
+
+**Quick Start:**
+```bash
+cd hetzner
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your values
+terraform init
+terraform apply
+# Or use the setup script:
+cd scripts
+./setup-cluster.sh
+export KUBECONFIG=~/.kube/config-budget
+kubectl get nodes
+```
+
+**Documentation**: [hetzner/README.md](hetzner/README.md)
+
+## Comparison Matrix
+
+| Feature | Local (Kind) | Hetzner Cloud |
+|---------|--------------|---------------|
+| **Purpose** | Development & Testing | Production & Staging |
+| **Nodes** | 2 (1 control + 1 worker) | 2 (1 master + 1 worker) |
+| **CPU/RAM per node** | Limited by Docker Desktop | 3 vCPU / 4GB RAM |
+| **Storage** | Docker volumes (ephemeral) | Hetzner Cloud Volumes (persistent) |
+| **Networking** | Docker bridge network | Private network + Load Balancer |
+| **Public Access** | localhost only | Public IP + DNS |
+| **SSL/TLS** | Self-signed or none | Let's Encrypt via cert-manager |
+| **Cost** | Free | ~€22-23/month |
+| **Setup Time** | ~2 minutes | ~5-10 minutes |
+| **Tear Down** | Instant | ~2-3 minutes |
+| **Persistence** | Lost on cluster deletion | Persistent volumes retained |
+| **External Access** | Port forwarding required | Direct internet access |
+| **Load Balancer** | Nginx Ingress (in-cluster) | Hetzner LB11 (external) |
+| **Sealed Secrets** | Auto-installed via Helm | Installed via Terraform |
+| **Private Registry** | Supported (GHCR) | Supported (GHCR) |
+
+## Recommended Workflow
+
+### Development Flow
+
+1. **Start Locally**
+   ```bash
+   # Create local cluster
+   cd iac/kind/scripts
+   ./setup-cluster.sh
+
+   # Deploy your application
+   export KUBECONFIG=~/.kube/config-budget-local
+   kubectl apply -f ../../k8s/base/ -n budget-app
+
+   # Test locally
+   curl http://localhost/api/health
+   ```
+
+2. **Iterate and Test**
+   - Make code changes
+   - Build and load images into Kind
+   - Test features locally
+   - Run integration tests
+
+3. **Deploy to Hetzner**
+   ```bash
+   # Deploy to production/staging
+   cd iac/hetzner
+   terraform apply
+
+   # Deploy application
+   export KUBECONFIG=~/.kube/config-budget
+   kubectl apply -f ../../k8s/base/ -n budget-app
+   ```
+
+## Common Operations
+
+### Switch Between Clusters
+
+```bash
+# Use local Kind cluster
+export KUBECONFIG=~/.kube/config-budget-local
+kubectl get nodes
+
+# Use Hetzner cluster
+export KUBECONFIG=~/.kube/config-budget
+kubectl get nodes
+
+# Or use kubectl contexts
+kubectl config get-contexts
+kubectl config use-context <context-name>
+```
+
+### Deploy Same Workload to Both
+
+```bash
+# Deploy to local
+export KUBECONFIG=~/.kube/config-budget-local
+kubectl apply -f k8s/base/ -n budget-app
+
+# Deploy to Hetzner
+export KUBECONFIG=~/.kube/config-budget
+kubectl apply -f k8s/base/ -n budget-app
+```
+
+### Load Local Images to Kind
+
+```bash
+# Build image
+docker build -t budget-app-api:local ./apps/api
+
+# Load to Kind
+kind load docker-image budget-app-api:local --name budget-app-local
+
+# Update K8s manifest to use local image
+# Set imagePullPolicy: Never or IfNotPresent
+```
+
+### Test Production Config Locally
+
+```bash
+# Use the same K8s manifests
+export KUBECONFIG=~/.kube/config-budget-local
+kubectl apply -f k8s/base/ -n budget-app
+
+# Access via localhost
+curl http://localhost
+```
 
 ## Prerequisites
 
-1. **Hetzner Cloud Account**
-   - Sign up at https://console.hetzner.cloud
-   - Create a project
-   - Generate an API token (Read & Write permissions)
-
-2. **Required Tools**
-   ```bash
-   # Terraform
-   brew install terraform
-
-   # kubectl
-   brew install kubectl
-
-   # hcloud CLI (optional, for debugging)
-   brew install hcloud
-   ```
-
-3. **SSH Key Pair**
-   ```bash
-   # Generate if you don't have one
-   ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-
-   # Get your public key
-   cat ~/.ssh/id_rsa.pub
-   ```
-
-## Quick Start
-
-### 1. Configure Variables
+### For Local (Kind)
 
 ```bash
-# Copy example file
-cp terraform.tfvars.example terraform.tfvars
+# Install Docker Desktop
+# Download from: https://www.docker.com/products/docker-desktop
 
-# Edit with your values
-vim terraform.tfvars
+# Install Kind
+brew install kind
+
+# Install kubectl
+brew install kubectl
 ```
 
-Required variables:
-- `hcloud_token`: Your Hetzner Cloud API token
-- `ssh_public_key`: Your SSH public key
-- `admin_ip`: Your IP address for SSH access (find with `curl ifconfig.me`)
-
-### 2. Initialize Terraform
+### For Hetzner Cloud
 
 ```bash
-terraform init
-```
+# Install Terraform
+brew install terraform
 
-### 3. Deploy Cluster
+# Install kubectl
+brew install kubectl
 
-**Option A: Using the setup script (recommended)**
-```bash
-cd scripts
-./setup-cluster.sh
-```
-
-**Option B: Manual deployment**
-```bash
-# Validate configuration
-terraform validate
-
-# Preview changes
-terraform plan
-
-# Apply changes
-terraform apply
-
-# Wait for cluster to be ready (2-3 minutes)
-sleep 120
-
-# Fetch kubeconfig
-cd scripts
-./get-kubeconfig.sh
-```
-
-### 4. Verify Cluster
-
-```bash
-# Set kubeconfig
-export KUBECONFIG=~/.kube/config-budget
-
-# Check nodes
-kubectl get nodes
-
-# Expected output:
-# NAME              STATUS   ROLES                  AGE   VERSION
-# budget-app-master Ready    control-plane,master   5m    v1.28.x+k3s1
-# budget-app-worker Ready    <none>                 4m    v1.28.x+k3s1
-
-# Check all pods
-kubectl get pods -A
-
-# Check storage class
-kubectl get storageclass
-```
-
-## Accessing the Cluster
-
-### SSH Access
-
-```bash
-# Master node
-./scripts/ssh-master.sh
-# Or: ssh root@$(terraform output -raw master_ip)
-
-# Worker node
-./scripts/ssh-worker.sh
-# Or: ssh root@$(terraform output -raw worker_ip)
-```
-
-### Kubernetes API
-
-```bash
-# Using kubeconfig
-export KUBECONFIG=~/.kube/config-budget
-kubectl get nodes
-
-# Or specify kubeconfig explicitly
-kubectl --kubeconfig=~/.kube/config-budget get nodes
-```
-
-## Deploying Applications
-
-Once the cluster is ready, you can deploy your Budget App:
-
-```bash
-# Create namespace
-kubectl create namespace budget-app
-
-# Apply k8s manifests (create these separately)
-kubectl apply -f ../k8s/base/ -n budget-app
-
-# Check deployment
-kubectl get pods -n budget-app
-```
-
-## Infrastructure Details
-
-### Network Configuration
-
-- **Private Network**: 10.0.0.0/16
-  - Master: 10.0.0.2
-  - Worker: 10.0.0.3
-- **Pod Network**: 10.42.0.0/16 (Flannel CNI)
-- **Service Network**: 10.43.0.0/16
-
-### Firewall Rules
-
-| Port       | Protocol | Source        | Purpose                |
-|------------|----------|---------------|------------------------|
-| 22         | TCP      | Admin IP      | SSH access             |
-| 6443       | TCP      | Admin IP      | Kubernetes API         |
-| 80, 443    | TCP      | 0.0.0.0/0     | HTTP/HTTPS traffic     |
-| 10250      | TCP      | Private net   | Kubelet API            |
-| 2379-2380  | TCP      | Private net   | etcd                   |
-| 8472       | UDP      | Private net   | Flannel VXLAN          |
-| 30000-32767| TCP      | 0.0.0.0/0     | NodePort services      |
-
-### Installed Components
-
-- **k3s**: Lightweight Kubernetes distribution
-- **Hetzner CSI Driver**: Dynamic volume provisioning
-- **Nginx Ingress Controller**: HTTP routing
-- **Default Storage Class**: hcloud-volumes (Retain policy)
-
-## Cost Estimate
-
-| Resource              | Type   | Monthly Cost |
-|-----------------------|--------|--------------|
-| Master Node           | CPX21  | ~€7          |
-| Worker Node           | CPX21  | ~€7          |
-| Load Balancer         | LB11   | ~€5.39       |
-| Volumes (30GB est.)   | Volume | ~€3          |
-| **Total**             |        | **~€22-23**  |
-
-*Prices as of 2025. Check current pricing at https://www.hetzner.com/cloud*
-
-## Useful Commands
-
-```bash
-# Get cluster info
-terraform output
-
-# Get load balancer IP
-terraform output loadbalancer_ip
-
-# Check k3s status on master
-ssh root@$(terraform output -raw master_ip) "systemctl status k3s"
-
-# View k3s logs
-ssh root@$(terraform output -raw master_ip) "journalctl -u k3s -f"
-
-# List all resources in Hetzner
-hcloud server list
-hcloud network list
-hcloud load-balancer list
-```
-
-## Maintenance
-
-### Scaling Workers
-
-To add more workers, modify `terraform/modules/k8s-cluster/main.tf` to create additional worker resources.
-
-### Upgrading k3s
-
-```bash
-# SSH to each node and run:
-curl -sfL https://get.k3s.io | sh -
-
-# Or use k3s-upgrade controller:
-# https://github.com/rancher/system-upgrade-controller
-```
-
-### Backups
-
-**Volume Snapshots:**
-```bash
-# Via hcloud CLI
-hcloud volume list
-hcloud volume create-snapshot <volume-id> --description "backup-$(date +%Y%m%d)"
-```
-
-**etcd Snapshots:**
-```bash
-# k3s automatically creates snapshots in /var/lib/rancher/k3s/server/db/snapshots/
-ssh root@$(terraform output -raw master_ip) "ls -lh /var/lib/rancher/k3s/server/db/snapshots/"
+# Get Hetzner Cloud API token
+# 1. Sign up at https://console.hetzner.cloud
+# 2. Create a project
+# 3. Generate API token (Read & Write)
 ```
 
 ## Troubleshooting
 
-### Nodes not joining
+### Can't Access Kind Cluster
 
 ```bash
-# Check k3s status on master
-ssh root@MASTER_IP "systemctl status k3s"
+# Check Docker is running
+docker info
 
-# Check k3s agent on worker
-ssh root@WORKER_IP "systemctl status k3s-agent"
+# Check cluster exists
+kind get clusters
 
-# View logs
-ssh root@MASTER_IP "journalctl -u k3s -n 100"
+# Re-export kubeconfig
+kind export kubeconfig --name budget-app-local --kubeconfig ~/.kube/config-budget-local
+export KUBECONFIG=~/.kube/config-budget-local
 ```
 
-### Storage issues
+### Can't Access Hetzner Cluster
 
 ```bash
-# Check CSI driver
-kubectl get pods -n kube-system | grep csi
+# Re-fetch kubeconfig
+cd iac/hetzner/scripts
+./get-kubeconfig.sh
 
-# Check hcloud secret
-kubectl get secret hcloud -n kube-system
-
-# Describe PVC
-kubectl describe pvc <pvc-name> -n <namespace>
+# Check firewall allows your IP
+cd iac/hetzner
+terraform output admin_ip
+curl ifconfig.me  # Compare with admin_ip
 ```
 
-### Network issues
+### Different Behavior Between Environments
+
+Common differences to check:
+- **Storage classes**: Kind uses local storage, Hetzner uses hcloud-volumes
+- **Load balancer**: Kind uses in-cluster Nginx, Hetzner uses external LB
+- **Network policies**: May behave differently due to CNI differences
+- **Resource limits**: Kind limited by Docker Desktop settings
+
+## Security Considerations
+
+### Local (Kind)
+
+- ✓ Isolated to your machine
+- ✓ No external access (unless port-forwarded)
+- ⚠️ Docker socket mounted (only if needed for testing)
+- ⚠️ No authentication by default
+
+### Hetzner Cloud
+
+- ✓ Firewall rules restrict access to admin IP
+- ✓ Private network for inter-node communication
+- ✓ SSH key authentication
+- ⚠️ Public IP exposed (use SSL/TLS)
+- ⚠️ API token has full access (keep secure)
+
+## Cost Management
+
+### Local (Kind)
+- **Cost**: Free
+- **Resource Usage**: Limited by Docker Desktop allocation
+- **Tip**: Destroy cluster when not in use to free resources
+
+### Hetzner Cloud
+- **Cost**: ~€22-23/month (see breakdown in hetzner/README.md)
+- **Tip**: Destroy staging clusters when not testing
+- **Tip**: Use smaller server types for non-production
+- **Tip**: Enable auto-shutdown for dev/test environments
 
 ```bash
-# Check firewall rules
-hcloud firewall describe budget-app-firewall
-
-# Test connectivity
-ssh root@MASTER_IP "ping -c 3 10.0.0.3"
-```
-
-## Cleanup
-
-### Destroy Entire Cluster
-
-```bash
-# Using script
-cd scripts
+# Destroy Hetzner cluster to stop billing
+cd iac/hetzner/scripts
 ./destroy-cluster.sh
-
-# Or manually
-terraform destroy
-
-# Clean up kubeconfig
-rm ~/.kube/config-budget
 ```
 
-**Warning**: This will delete all resources and data. Make sure you have backups!
+## Monitoring and Observability
 
-## Security Best Practices
+Both environments support the same monitoring stack:
 
-1. **Restrict SSH Access**: Set `admin_ip` to your specific IP, not `0.0.0.0/0`
-2. **Rotate Credentials**: Regularly rotate Hetzner API tokens
-3. **Enable SSL**: Use cert-manager for automatic SSL certificates
-4. **Network Policies**: Implement Kubernetes network policies
-5. **RBAC**: Use role-based access control for kubectl access
-6. **Secrets**: Use sealed-secrets or external-secrets for sensitive data
+```bash
+# Deploy Prometheus & Grafana
+kubectl apply -f k8s/monitoring/ -n monitoring
+
+# Access Grafana (local)
+kubectl port-forward -n monitoring svc/grafana 3000:3000
+open http://localhost:3000
+
+# Access Grafana (Hetzner)
+# Configure Ingress for grafana.yourdomain.com
+```
+
+## Backup and Disaster Recovery
+
+### Local (Kind)
+- No built-in backup (development only)
+- Export/import YAML manifests
+- Use git for configuration management
+
+### Hetzner Cloud
+- Volume snapshots via Hetzner console
+- etcd snapshots (automatic with k3s)
+- See [hetzner/README.md](hetzner/README.md#backups) for details
+
+## CI/CD Integration
+
+Both environments work with CI/CD pipelines:
+
+```yaml
+# Example GitHub Actions workflow
+- name: Test on Kind
+  run: |
+    kind create cluster --config iac/kind/kind-config.yaml
+    kubectl apply -f k8s/base/
+    # Run tests
+
+- name: Deploy to Hetzner
+  if: github.ref == 'refs/heads/main'
+  run: |
+    # Use kubeconfig from secrets
+    kubectl apply -f k8s/base/
+```
+
+## Migration Path
+
+### Local → Hetzner
+
+1. Ensure manifests work in local Kind cluster
+2. Export configurations: `kubectl get all -n budget-app -o yaml > backup.yaml`
+3. Apply to Hetzner cluster
+4. Update Ingress for public domain
+5. Configure DNS and SSL
+
+### Hetzner → Local
+
+1. Export manifests: `kubectl get all -n budget-app -o yaml > backup.yaml`
+2. Edit for local (remove LoadBalancer, adjust Ingress)
+3. Apply to Kind cluster
+4. Test via localhost
+
+## Getting Help
+
+- **Kind Issues**: [kind/README.md](kind/README.md#troubleshooting)
+- **Hetzner Issues**: [hetzner/README.md](hetzner/README.md#troubleshooting)
+- **Kubernetes**: https://kubernetes.io/docs/
+- **Project Issues**: Open an issue in this repository
 
 ## Next Steps
 
-1. Deploy the Budget App using Kubernetes manifests (see `/k8s` directory)
-2. Set up DNS pointing to the load balancer IP
-3. Configure SSL with cert-manager
-4. Set up monitoring with Prometheus/Grafana
-5. Configure automated backups
+1. **New to Kubernetes?** Start with [kind/README.md](kind/README.md) for local experimentation
+2. **Ready for production?** Follow [hetzner/README.md](hetzner/README.md) for cloud deployment
+3. **Need both?** Set up local first, then deploy to Hetzner when ready
 
-## Support
+## Contributing
 
-- Hetzner Cloud Docs: https://docs.hetzner.com/cloud/
-- k3s Documentation: https://docs.k3s.io/
-- Terraform Hetzner Provider: https://registry.terraform.io/providers/hetznercloud/hcloud/
-
-## License
-
-This infrastructure code is part of the Budget App project.
+When adding new infrastructure:
+1. Test locally in Kind first
+2. Document in respective README
+3. Add scripts to respective scripts/ directory
+4. Update this README if adding new environments

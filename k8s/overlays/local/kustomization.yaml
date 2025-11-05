@@ -1,0 +1,84 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: budget-app
+
+# Use base configurations
+resources:
+  - ../../base
+
+# Patch images for local development
+images:
+  - name: ghcr.io/jesseinit/budget-server
+    newName: budget-app-server
+    newTag: latest
+  - name: ghcr.io/jesseinit/budget-client
+    newName: budget-app-client
+    newTag: latest
+
+# Patch image pull policy for local images
+patches:
+  # Backend deployment
+  - target:
+      kind: Deployment
+      name: backend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 5
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+      - op: remove
+        path: /spec/template/spec/imagePullSecrets
+
+  # Frontend deployment
+  - target:
+      kind: Deployment
+      name: frontend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 5
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+      - op: remove
+        path: /spec/template/spec/imagePullSecrets
+
+  # Postgres StatefulSet - use Kind's standard storage class
+  - target:
+      kind: StatefulSet
+      name: postgres
+    patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: standard
+
+  # Redis StatefulSet - use Kind's standard storage class
+  - target:
+      kind: StatefulSet
+      name: redis
+    patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: standard
+
+  # Ingress - adapt for local development
+  - target:
+      kind: Ingress
+      name: budget-app-ingress
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      - op: replace
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1ssl-redirect
+        value: "false"
+      - op: remove
+        path: /spec/tls
+      - op: replace
+        path: /spec/rules/0/host
+        value: localhost
+      - op: replace
+        path: /spec/rules/1/host
+        value: api.localhost
