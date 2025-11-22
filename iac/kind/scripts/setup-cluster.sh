@@ -72,7 +72,7 @@ if kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
 fi
 
 # Create cluster
-echo -e "${YELLOW}Creating Kind cluster with 5 nodes (1 control-plane + 4 workers)...${NC}"
+echo -e "${YELLOW}Creating Kind cluster with 5 nodes (1 control-plane + 2 workers)...${NC}"
 kind create cluster --config="${KIND_CONFIG}" --wait=5m
 
 # Export kubeconfig
@@ -298,9 +298,9 @@ sleep 5
 
 # Test backend health
 echo -e "${YELLOW}Testing backend health...${NC}"
-if curl -s -f -H "Host: api.localhost" http://localhost:6080/health >/dev/null 2>&1; then
+if curl -s -f -H "Host: api.budget.local" http://budget.local:6080/health >/dev/null 2>&1; then
     echo -e "${GREEN}✓ Backend is healthy${NC}"
-    curl -s -H "Host: api.localhost" http://localhost:6080/health
+    curl -s -H "Host: api.budget.local" http://budget.local:6080/health
 else
     echo -e "${YELLOW}⚠ Backend health check failed (may still be starting)${NC}"
 fi
@@ -311,9 +311,13 @@ echo -e "${GREEN}✓ Setup Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 echo -e "${YELLOW}Access your application:${NC}"
+echo "  Frontend:   http://budget.local:6080"
+echo "  API Docs:   http://budget.local:6080/docs"
+echo "  API Health: http://api.budget.local:6080/health"
+echo ""
+echo -e "${YELLOW}Alternative access (if domains not configured):${NC}"
 echo "  Frontend:   http://localhost:6080"
 echo "  API Docs:   http://localhost:6080/docs"
-echo "  API Health: curl -H 'Host: api.localhost' http://localhost:6080/health"
 echo ""
 echo -e "${YELLOW}Note:${NC} Using ports 6080/6443 to avoid conflicts with system services"
 echo ""

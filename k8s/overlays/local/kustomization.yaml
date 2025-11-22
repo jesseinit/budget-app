@@ -78,7 +78,7 @@ patches:
         path: /spec/tls
       - op: replace
         path: /spec/rules/0/host
-        value: localhost
+        value: budget.local
       - op: replace
         path: /spec/rules/1/host
-        value: api.localhost
+        value: api.budget.local

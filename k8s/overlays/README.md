@@ -40,19 +40,32 @@ make deploy-kind
 kubectl apply -k k8s/overlays/local/
 ```
 
+**Setup local domains (one-time):**
+```bash
+# Add entries to /etc/hosts
+sudo bash -c 'cat >> /etc/hosts << EOF
+# Budget App Local Development
+127.0.0.1  budget.local
+127.0.0.1  api.budget.local
+EOF'
+```
+
 **Access the application:**
 ```bash
-# Frontend (via ingress on port 6080)
-open http://localhost:6080
+# Frontend
+open http://budget.local:6080
 
 # Backend API docs
-open http://localhost:6080/docs
+open http://budget.local:6080/docs
 
-# Backend API directly (via api.localhost subdomain)
-curl http://localhost:6080 -H "Host: api.localhost"
+# Backend API health
+curl http://api.budget.local:6080/health
 
-# Backend health check
-curl http://localhost:6080/health -H "Host: api.localhost"
+# Backend API root
+curl http://api.budget.local:6080
+
+# Alternative (without /etc/hosts setup)
+open http://localhost:6080
 ```
 
 **How it works:**

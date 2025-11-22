@@ -7,67 +7,43 @@ nodes:
   # Control plane node
   - role: control-plane
     kubeadmConfigPatches:
-    - |
-      kind: InitConfiguration
-      nodeRegistration:
-        kubeletExtraArgs:
-          node-labels: "ingress-ready=true"
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
     extraPortMappings:
-    # Allow local access to ingress controller
-    # Using high ports to avoid conflicts
-    - containerPort: 80
-      hostPort: 6080
-      protocol: TCP
-    - containerPort: 443
-      hostPort: 6443
-      protocol: TCP
+      # Allow local access to ingress controller
+      # Using high ports to avoid conflicts
+      - containerPort: 80
+        hostPort: 6080
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 6443
+        protocol: TCP
 
-  # Worker node 1 - 4GB memory limit
   - role: worker
     extraMounts:
-    - hostPath: /dev/null
-      containerPath: /dev/null
+      - hostPath: /dev/null
+        containerPath: /dev/null
     kubeadmConfigPatches:
-    - |
-      kind: JoinConfiguration
-      nodeRegistration:
-        kubeletExtraArgs:
-          system-reserved: "memory=512Mi"
-          kube-reserved: "memory=512Mi"
-          eviction-hard: "memory.available<512Mi"
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            system-reserved: "memory=512Mi"
+            kube-reserved: "memory=512Mi"
+            eviction-hard: "memory.available<512Mi"
 
-  # Worker node 2 - 4GB memory limit
   - role: worker
     kubeadmConfigPatches:
-    - |
-      kind: JoinConfiguration
-      nodeRegistration:
-        kubeletExtraArgs:
-          system-reserved: "memory=512Mi"
-          kube-reserved: "memory=512Mi"
-          eviction-hard: "memory.available<512Mi"
-
-  # Worker node 3 - 4GB memory limit
-  - role: worker
-    kubeadmConfigPatches:
-    - |
-      kind: JoinConfiguration
-      nodeRegistration:
-        kubeletExtraArgs:
-          system-reserved: "memory=512Mi"
-          kube-reserved: "memory=512Mi"
-          eviction-hard: "memory.available<512Mi"
-
-  # Worker node 4 - 4GB memory limit
-  - role: worker
-    kubeadmConfigPatches:
-    - |
-      kind: JoinConfiguration
-      nodeRegistration:
-        kubeletExtraArgs:
-          system-reserved: "memory=512Mi"
-          kube-reserved: "memory=512Mi"
-          eviction-hard: "memory.available<512Mi"
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            system-reserved: "memory=512Mi"
+            kube-reserved: "memory=512Mi"
+            eviction-hard: "memory.available<512Mi"
 
 # Networking configuration
 networking:
