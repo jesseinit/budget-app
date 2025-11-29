@@ -13,8 +13,8 @@ function CurrentPeriodCard({ currentPeriod, currency = 'USD' }) {
 
   if (!currentPeriod) {
     return (
-      <div className="rounded-xl bg-white p-6 shadow-md">
-        <p className="text-gray-500">No active budget period</p>
+      <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-md">
+        <p className="text-gray-500 dark:text-gray-400">No active budget period</p>
       </div>
     );
   }
@@ -24,12 +24,12 @@ function CurrentPeriodCard({ currentPeriod, currency = 'USD' }) {
                           parseFloat(currentPeriod.total_expenses);
 
   return (
-    <div className="overflow-hidden rounded-xl bg-gray-100 shadow-md">
-      <div className="bg-gray-100 p-6">
+    <div className="overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 shadow-md">
+      <div className="bg-gray-100 dark:bg-gray-800 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{currentPeriod.period_name}</h3>
-            <p className="text-sm text-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{currentPeriod.period_name}</h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
               {formatDate(currentPeriod.started_at)} - {formatDate(currentPeriod.ended_at)}
             </p>
           </div>
@@ -43,51 +43,51 @@ function CurrentPeriodCard({ currentPeriod, currency = 'USD' }) {
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between border-b border-gray-300 pb-2">
-            <span className="text-sm text-gray-700">Brought Forward</span>
-            <span className="font-semibold text-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-300 dark:border-gray-700 pb-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">Brought Forward</span>
+            <span className="font-semibold text-gray-900 dark:text-white">
               {formatCurrency(currentPeriod.brought_forward, currency)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between border-b border-gray-300 pb-2">
-            <span className="text-sm text-gray-700">Expected Income</span>
-            <span className="font-semibold text-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-300 dark:border-gray-700 pb-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">Expected Income</span>
+            <span className="font-semibold text-gray-900 dark:text-white">
               {formatCurrency(currentPeriod.expected_income, currency)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between border-b border-gray-300 pb-2">
-            <span className="text-sm text-gray-700">Actual Income</span>
-            <span className="font-semibold text-green-600">
+          <div className="flex items-center justify-between border-b border-gray-300 dark:border-gray-700 pb-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">Actual Income</span>
+            <span className="font-semibold text-green-600 dark:text-green-400">
               +{formatCurrency(currentPeriod.actual_income, currency)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between border-b border-gray-300 pb-2">
-            <span className="text-sm text-gray-700">Total Expenses</span>
-            <span className="font-semibold text-red-600">
+          <div className="flex items-center justify-between border-b border-gray-300 dark:border-gray-700 pb-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">Total Expenses</span>
+            <span className="font-semibold text-red-600 dark:text-red-400">
               -{formatCurrency(currentPeriod.total_expenses, currency)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between border-b border-gray-300 pb-2">
-            <span className="text-sm text-gray-700">Total Savings</span>
-            <span className="font-semibold text-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-300 dark:border-gray-700 pb-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">Total Savings</span>
+            <span className="font-semibold text-gray-900 dark:text-white">
               {formatCurrency(currentPeriod.total_savings, currency)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between border-b border-gray-300 pb-2">
-            <span className="text-sm text-gray-700">Total Investments</span>
-            <span className="font-semibold text-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-300 dark:border-gray-700 pb-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">Total Investments</span>
+            <span className="font-semibold text-gray-900 dark:text-white">
               {formatCurrency(currentPeriod.total_investments, currency)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between pt-2 bg-white rounded-lg px-3 py-2 mt-3 border border-gray-300">
-            <span className="text-sm font-medium text-gray-900">Available Balance</span>
-            <span className="text-xl font-bold text-indigo-600">
+          <div className="flex items-center justify-between pt-2 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 mt-3 border border-gray-300 dark:border-gray-600">
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Available Balance</span>
+            <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
               {formatCurrency(availableBalance, currency)}
             </span>
           </div>

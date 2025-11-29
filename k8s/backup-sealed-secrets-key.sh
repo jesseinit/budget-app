@@ -20,7 +20,7 @@ echo "Using kubeconfig: $KUBECONFIG"
 echo ""
 
 # Check if sealed-secrets is running
-if ! kubectl get deployment sealed-secrets-controller -n kube-system &> /dev/null; then
+if ! kubectl get deployment sealed-secrets -n kube-system &> /dev/null; then
   echo "Error: Sealed-secrets controller not found in cluster"
   echo "It should have been installed automatically during cluster creation."
   exit 1

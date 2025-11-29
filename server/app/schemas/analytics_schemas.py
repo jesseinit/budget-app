@@ -17,12 +17,16 @@ class CategoryBreakdown(BaseModel):
 
 
 class MonthlyTrend(BaseModel):
-    month: str
-    income: Decimal
-    expenses: Decimal
-    savings: Decimal
-    investments: Decimal
-    net_worth: Decimal
+    month: int
+    year: int
+    type: str  # 'income' or 'expense'
+    amount: Decimal
+
+    # income: Decimal
+    # expenses: Decimalll
+    # savings: Decimal
+    # investments: Decimal
+    # net_worth: Decimal
 
 
 class YearlySummary(BaseModel):

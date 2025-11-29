@@ -6,8 +6,8 @@ set -e
 echo "=== WARNING: This will destroy the entire cluster and all data! ==="
 echo ""
 
-read -p "Are you absolutely sure you want to destroy the cluster? (type 'destroy' to confirm): " confirm
-if [ "$confirm" != "destroy" ]; then
+read -p "Are you absolutely sure you want to destroy the cluster? (type '1' to confirm): " confirm
+if [ "$confirm" != "1" ]; then
   echo "Aborted."
   exit 0
 fi

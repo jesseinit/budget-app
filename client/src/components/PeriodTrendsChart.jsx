@@ -32,8 +32,8 @@ function PeriodTrendsChart({ monthlyTrends, currency = 'USD' }) {
 
   if (!monthlyTrends || monthlyTrends.length === 0) {
     return (
-      <div className="rounded-xl bg-white p-6 shadow-md">
-        <p className="text-gray-500">No period trends available</p>
+      <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-md">
+        <p className="text-gray-500 dark:text-gray-400">No period trends available</p>
       </div>
     );
   }
@@ -48,8 +48,8 @@ function PeriodTrendsChart({ monthlyTrends, currency = 'USD' }) {
 
   if (filteredPeriods.length === 0) {
     return (
-      <div className="rounded-xl bg-white p-6 shadow-md">
-        <p className="text-gray-500">No period trends available</p>
+      <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-md">
+        <p className="text-gray-500 dark:text-gray-400">No period trends available</p>
       </div>
     );
   }
@@ -171,15 +171,15 @@ function PeriodTrendsChart({ monthlyTrends, currency = 'USD' }) {
   };
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white shadow-md border border-gray-200">
-      <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
+    <div className="overflow-hidden rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700">
+      <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 px-6 py-4">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-blue-600 p-2 shadow-sm">
             <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">Budget Period Trends</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Budget Period Trends</h3>
         </div>
       </div>
 

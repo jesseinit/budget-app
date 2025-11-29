@@ -55,7 +55,7 @@ function Dashboard({ user }) {
   };
 
   return (
-    <div className="h-full bg-gray-50 p-6">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 p-6">
       <div className="mx-auto max-w-7xl pb-1">
         {/* Welcome Section */}
         <div className="mb-8 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 p-8 text-white shadow-lg">
@@ -71,15 +71,15 @@ function Dashboard({ user }) {
         {loading && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-              <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 dark:border-blue-400 border-r-transparent"></div>
+              <p className="mt-4 text-gray-600 dark:text-gray-300">Loading your dashboard...</p>
             </div>
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div className="mb-8 rounded-xl bg-red-50 p-6 text-red-800 shadow-md">
+          <div className="mb-8 rounded-xl bg-red-50 dark:bg-red-900/20 p-6 text-red-800 dark:text-red-300 shadow-md">
             <div className="flex items-center gap-3">
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

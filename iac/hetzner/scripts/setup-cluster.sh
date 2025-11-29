@@ -32,8 +32,8 @@ echo "Step 2: Planning infrastructure changes..."
 terraform plan -out=tfplan
 
 echo ""
-read -p "Do you want to apply these changes? (yes/no): " confirm
-if [ "$confirm" != "yes" ]; then
+read -p "Do you want to apply these changes? (1/0): " confirm
+if [ "$confirm" != "1" ]; then
   echo "Aborted."
   exit 0
 fi
@@ -251,24 +251,24 @@ if [ -d "../../../k8s/base" ]; then
   kubectl apply -k ../../../k8s/base
   echo "Application manifests deployed successfully!"
 
-  # Apply backed-up sealed-secrets key if it exists
-  echo ""
-  echo "Checking for backed-up sealed-secrets key..."
-  if [ -f "../../../.sealed-secrets-keys/sealed-secrets-key.yaml" ]; then
-    echo "Found backed-up sealed-secrets key. Applying to cluster..."
-    kubectl apply -f ../../../.sealed-secrets-keys/sealed-secrets-key.yaml
+  # # Apply backed-up sealed-secrets key if it exists
+  # echo ""
+  # echo "Checking for backed-up sealed-secrets key..."
+  # if [ -f "../../../.sealed-secrets-keys/sealed-secrets-key.yaml" ]; then
+  #   echo "Found backed-up sealed-secrets key. Applying to cluster..."
+  #   kubectl apply -f ../../../.sealed-secrets-keys/sealed-secrets-key.yaml
 
-    echo "Restarting sealed-secrets controller to pick up the new key..."
-    kubectl delete pod -n kube-system -l app.kubernetes.io/name=sealed-secrets
+  #   echo "Restarting sealed-secrets controller to pick up the new key..."
+  #   kubectl delete pod -n kube-system -l app.kubernetes.io/name=sealed-secrets
 
-    echo "Waiting for sealed-secrets controller to restart..."
-    sleep 10
+  #   echo "Waiting for sealed-secrets controller to restart..."
+  #   sleep 10
 
-    echo "Sealed-secrets key applied successfully. Secrets should now be decrypted."
-  else
-    echo "No backed-up sealed-secrets key found. Using cluster-generated key."
-    echo "Note: You'll need to re-seal your secrets with the new cluster's public key."
-  fi
+  #   echo "Sealed-secrets key applied successfully. Secrets should now be decrypted."
+  # else
+  #   echo "No backed-up sealed-secrets key found. Using cluster-generated key."
+  #   echo "Note: You'll need to re-seal your secrets with the new cluster's public key."
+  # fi
 
   echo ""
   echo "Waiting for pods to be ready..."

@@ -90,8 +90,8 @@ hetzner-setup: ## Create Kubernetes cluster on Hetzner Cloud
 
 hetzner-destroy: ## Destroy Hetzner Cloud cluster and all resources
 	@echo "WARNING: This will destroy all infrastructure on Hetzner Cloud!"
-	@read -p "Are you sure? Type 'yes' to confirm: " confirm; \
-	if [ "$$confirm" = "yes" ]; then \
+	@read -p "Are you sure? Type '1' to confirm: " confirm; \
+	if [ "$$confirm" = "1" ]; then \
 		cd $(HETZNER_SCRIPTS_DIR) && ./destroy-cluster.sh; \
 	else \
 		echo "Destroy cancelled."; \

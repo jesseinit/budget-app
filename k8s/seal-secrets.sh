@@ -37,7 +37,7 @@ echo ""
 echo "Sealing secrets..."
 
 # Seal main app secrets
-kubeseal --cert=../.sealed-secrets-keys/pub-cert.pem --format=yaml \
+kubeseal --cert=../../.sealed-secrets-keys/pub-cert.pem --format=yaml \
   < base/secrets.yaml \
   > base/sealed-secrets-new.yaml
 

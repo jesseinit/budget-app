@@ -9,8 +9,6 @@ resources:
   - secrets-backend.yaml
   - config-maps-backend.yaml
   - config-maps-frontend.yaml
-  - postgres-statefulset.yaml
-  - redis-statefulset.yaml
   - frontend-deployment.yaml
   - backend-deployment.yaml
   - ingress.yaml
