@@ -1,11 +1,18 @@
 import { formatCurrency, formatPercentage } from '../utils/currency';
 
-function YearlyAnalytics({ yearlyData, onYearChange, selectedYear, currency = 'USD' }) {
+function YearlyAnalytics({ yearlyData, onYearChange, selectedYear, currency = 'USD', savingSince }) {
 
-  // Generate year options from 2020 to current year
+  // Generate year options from saving_since to current year
   const currentYear = new Date().getFullYear();
+  let startYear = 2020; // Default fallback
+  console.log('savingSince:', savingSince);
+  if (savingSince) {
+    const savingSinceDate = new Date(savingSince);
+    startYear = savingSinceDate.getFullYear();
+  }
+
   const yearOptions = [];
-  for (let year = 2020; year <= currentYear; year++) {
+  for (let year = startYear; year <= currentYear; year++) {
     yearOptions.push(year);
   }
 

@@ -16,17 +16,20 @@ class CategoryBreakdown(BaseModel):
     transaction_count: int
 
 
-class MonthlyTrend(BaseModel):
-    month: int
+class SpendTrend(BaseModel):
     year: int
-    type: str  # 'income' or 'expense'
-    amount: Decimal
+    month: int
+    type: str
+    amount: float
 
-    # income: Decimal
-    # expenses: Decimalll
-    # savings: Decimal
-    # investments: Decimal
-    # net_worth: Decimal
+
+class MonthlyTrend(BaseModel):
+    month: str
+    income: Decimal
+    expenses: Decimal
+    savings: Decimal
+    investments: Decimal
+    net_worth: Decimal
 
 
 class YearlySummary(BaseModel):
@@ -54,6 +57,8 @@ class DashboardSummary(BaseModel):
     current_period: BudgetPeriodResponse | None
     investment_performance: InvestmentPerformance
     net_worth: Decimal
+    all_time_income: Decimal
+    all_time_expenses: Decimal
     this_month_income: Decimal
     this_month_expenses: Decimal
     this_month_savings: Decimal

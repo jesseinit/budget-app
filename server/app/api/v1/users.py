@@ -4,17 +4,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user_models import User
-from app.schemas import ApiResponse, MessageResponse
+from app.schemas import ApiResponse, MessageResponse, UserProfileResponse, UserStats
 from app.schemas.user_schemas import UserResponse, UserUpdate
 from app.services.user_service import UserService
 
 router = APIRouter()
 
 
-@router.get("/profile", response_model=ApiResponse[UserResponse])
-async def get_profile(current_user: User = Depends(get_current_user)):
-    """Get current user's profile"""
-    return ApiResponse(result=current_user)
+@router.get("/profile", response_model=ApiResponse[UserProfileResponse])
+async def get_profile(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Get current user's profile with stats"""
+    service = UserService(db)
+    stats_data = await service.get_user_stats(current_user.id)
+
+    # Create UserStats object
+    user_stats = UserStats(**stats_data)
+
+    profile_response = UserProfileResponse(user=current_user, stats=user_stats)
+
+    return ApiResponse(result=profile_response)
 
 
 @router.put("/profile", response_model=ApiResponse[UserResponse])
@@ -49,10 +57,7 @@ async def update_salary_day(
         if not updated_user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         return ApiResponse(
-            result=MessageResponse(
-                message="Salary day updated successfully",
-                details={"salary_day": salary_day}
-            )
+            result=MessageResponse(message="Salary day updated successfully", details={"salary_day": salary_day})
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -76,8 +81,5 @@ async def delete_account(current_user: User = Depends(get_current_user), db: Asy
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return ApiResponse(
-        result=MessageResponse(
-            message="Account deleted successfully",
-            details={"user_id": str(current_user.id)}
-        )
+        result=MessageResponse(message="Account deleted successfully", details={"user_id": str(current_user.id)})
     )

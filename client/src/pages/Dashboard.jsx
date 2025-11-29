@@ -8,7 +8,7 @@ import RecentTransactions from '../components/RecentTransactions';
 import YearlyAnalytics from '../components/YearlyAnalytics';
 import PeriodTrendsChart from '../components/PeriodTrendsChart';
 
-function Dashboard({ user }) {
+function Dashboard({ user, profileStats }) {
   const [dashboardData, setDashboardData] = useState(null);
   const [yearlyData, setYearlyData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -94,38 +94,47 @@ function Dashboard({ user }) {
           <>
             {/* Stats Grid */}
             <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {/* Net Worth Card with Savings Rate Badge */}
+              <div className="overflow-hidden rounded-xl bg-white dark:bg-gray-800 shadow-md transition-transform hover:scale-105">
+                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="text-sm font-medium text-indigo-900 dark:text-indigo-200">Net Worth</p>
+                        <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-400">
+                          {formatPercentage(dashboardData.savings_rate)} saved
+                        </span>
+                      </div>
+                      <p className="mt-2 text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                        {formatCurrency(dashboardData.net_worth, userCurrency)}
+                      </p>
+                      <p className="mt-1 text-xs text-indigo-700 dark:text-indigo-300">All-time total assets</p>
+                    </div>
+                    <div className="rounded-full bg-indigo-500 dark:bg-indigo-600 p-3">
+                      <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <StatCard
-                title="Net Worth"
-                value={formatCurrency(dashboardData.net_worth, userCurrency)}
-                subtitle="Total assets"
-                colorClass="indigo"
+                title="All-Time Income"
+                value={formatCurrency(dashboardData.all_time_income, userCurrency)}
+                subtitle="Total income earned"
+                colorClass="green"
                 icon={
                   <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
                   </svg>
                 }
               />
 
               <StatCard
-                title="Investment Return"
-                value={
-                  dashboardData.investment_performance?.profit_loss_percentage >= 0
-                    ? `+${formatPercentage(dashboardData.investment_performance?.profit_loss_percentage || 0)}`
-                    : formatPercentage(dashboardData.investment_performance?.profit_loss_percentage || 0)
-                }
-                subtitle={`${formatCurrency(dashboardData.investment_performance?.current_value || 0, userCurrency)} current value`}
-                colorClass={dashboardData.investment_performance?.profit_loss_percentage >= 0 ? 'green' : 'red'}
-                icon={
-                  <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                }
-              />
-
-              <StatCard
-                title="This Month Expenses"
-                value={formatCurrency(dashboardData.this_month_expenses, userCurrency)}
-                subtitle="Expenses this period"
+                title="All-Time Expenses"
+                value={formatCurrency(dashboardData.all_time_expenses, userCurrency)}
+                subtitle="Total expenses spent"
                 colorClass="red"
                 icon={
                   <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,13 +144,17 @@ function Dashboard({ user }) {
               />
 
               <StatCard
-                title="Savings Rate"
-                value={formatPercentage(dashboardData.savings_rate)}
-                subtitle={`${formatCurrency(dashboardData.this_month_savings, userCurrency)} saved`}
-                colorClass="amber"
+                title="Investments"
+                value={formatCurrency(dashboardData.investment_performance?.current_value || 0, userCurrency)}
+                subtitle={
+                  dashboardData.investment_performance?.profit_loss_percentage >= 0
+                    ? `+${formatPercentage(dashboardData.investment_performance?.profit_loss_percentage || 0)} return`
+                    : `${formatPercentage(dashboardData.investment_performance?.profit_loss_percentage || 0)} return`
+                }
+                colorClass={dashboardData.investment_performance?.profit_loss_percentage >= 0 ? 'green' : 'red'}
                 icon={
                   <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 }
               />
@@ -157,6 +170,7 @@ function Dashboard({ user }) {
                   selectedYear={selectedYear}
                   onYearChange={handleYearChange}
                   currency={userCurrency}
+                  savingSince={profileStats?.saving_since}
                 />
               )}
             </div>

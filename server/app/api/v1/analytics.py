@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User
-from app.schemas import ApiResponse, CategoryBreakdown, DashboardSummary, MonthlyTrend, YearlySummary
+from app.schemas import ApiResponse, CategoryBreakdown, DashboardSummary, SpendTrend, YearlySummary
 from app.services.analytics_service import AnalyticsService
 
 router = APIRouter()
@@ -30,7 +30,7 @@ async def get_yearly_summary(
     return ApiResponse(result=summary)
 
 
-@router.get("/trends", response_model=ApiResponse[List[MonthlyTrend]])
+@router.get("/trends", response_model=ApiResponse[List[SpendTrend]])
 async def get_spending_trends(
     months: int = Query(12, ge=1, le=24),
     current_user: User = Depends(get_current_user),

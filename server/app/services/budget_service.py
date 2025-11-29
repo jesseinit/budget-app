@@ -374,9 +374,6 @@ class BudgetService:
         result = await self.db.execute(query)
         totals = {row.type: row.total for row in result}
 
-        logger.info(f">>>>Rebuilding period {period_id} with totals: {totals}")
-        # breakpoint()
-
         prv_period = period.previous_period
         period.brought_forward = prv_period.carried_forward if prv_period else period.brought_forward
         period.actual_income = totals.get("income", Decimal("0"))

@@ -2,6 +2,7 @@ from app.schemas.analytics_schemas import (
     CategoryBreakdown,
     DashboardSummary,
     MonthlyTrend,
+    SpendTrend,
     YearlySummary,
     Trading212AccountData,
     InvestmentPerformance,
@@ -19,7 +20,7 @@ from app.schemas.response_schemas import (
     PaginationMeta,
 )
 from app.schemas.transaction_schemas import TransactionCreate, TransactionResponse, TransactionUpdate
-from app.schemas.user_schemas import UserCreate, UserResponse, UserUpdate
+from app.schemas.user_schemas import UserCreate, UserProfileResponse, UserResponse, UserStats, UserUpdate
 
 __all__ = [
     "Token",
@@ -28,6 +29,8 @@ __all__ = [
     "UserResponse",
     "UserCreate",
     "UserUpdate",
+    "UserStats",
+    "UserProfileResponse",
     "BudgetPeriodCreate",
     "BudgetPeriodUpdate",
     "BudgetPeriodResponse",
@@ -44,6 +47,7 @@ __all__ = [
     "YearlySummary",
     "CategoryBreakdown",
     "MonthlyTrend",
+    "SpendTrend",
     "Trading212AccountData",
     "InvestmentPerformance",
     # Response wrappers

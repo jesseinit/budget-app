@@ -15,6 +15,7 @@ function UserProfile({ user }) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [profileStats, setProfileStats] = useState(null);
 
   // Get user's currency from profile, default to USD
   const userCurrency = user?.currency || 'USD';
@@ -23,8 +24,14 @@ function UserProfile({ user }) {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const response = await dashboardService.getDashboardAnalytics();
-        setDashboardData(response.result);
+        // Fetch both dashboard data and profile stats in parallel
+        const [dashboardResponse, profileResponse] = await Promise.all([
+          dashboardService.getDashboardAnalytics(),
+          authService.getUserProfile()
+        ]);
+        console.log(" profileResponse:", profileResponse);
+        setDashboardData(dashboardResponse.result);
+        setProfileStats(profileResponse.stats);
         setError(null);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -211,6 +218,7 @@ function UserProfile({ user }) {
                   selectedYear={selectedYear}
                   onYearChange={handleYearChange}
                   currency={userCurrency}
+                  savingSince={profileStats?.saving_since}
                 />
               )}
             </div>

@@ -6,6 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user_models import User
 from app.schemas.user_schemas import UserCreate, UserUpdate
+from decimal import Decimal
+
+from sqlalchemy import func
+
+from app.models.budget_period_models import BudgetPeriod
+from app.models.category_models import Category
+from app.models.financial_goal_models import FinancialGoal
+from app.models.transaction_models import Transaction
 
 
 class UserService:
@@ -76,11 +84,11 @@ class UserService:
 
     async def get_user_stats(self, user_id: UUID) -> dict:
         """Get user statistics"""
-        from sqlalchemy import func
 
-        from app.models.budget_period_models import BudgetPeriod
-        from app.models.financial_goal_models import FinancialGoal
-        from app.models.transaction_models import Transaction
+        # Get first date of transaction
+        first_transaction_query = select(func.min(Transaction.transacted_at)).where(Transaction.user_id == user_id)
+        first_transaction_result = await self.db.execute(first_transaction_query)
+        first_transaction_date = first_transaction_result.scalar()
 
         # Count transactions
         transaction_count_query = select(func.count(Transaction.id)).where(Transaction.user_id == user_id)
@@ -109,4 +117,5 @@ class UserService:
             "active_financial_goals": goal_count or 0,
             "days_since_signup": days_since_signup,
             "member_since": user.created_at if user else None,
+            "saving_since": first_transaction_date,
         }

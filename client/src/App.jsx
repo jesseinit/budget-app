@@ -10,6 +10,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 
 function AppContent() {
   const [user, setUser] = useState(null)
+  const [profileStats, setProfileStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const location = useLocation()
 
@@ -28,9 +29,10 @@ function AppContent() {
       }
 
       try {
-        // Fetch user profile
+        // Fetch user profile with stats
         const profile = await authService.getUserProfile()
-        setUser(profile)
+        setUser(profile.user)
+        setProfileStats(profile.stats)
       } catch (error) {
         console.error('Failed to fetch user profile:', error)
 
@@ -41,7 +43,8 @@ function AppContent() {
           // Token refreshed successfully, retry fetching profile
           try {
             const profile = await authService.getUserProfile()
-            setUser(profile)
+            setUser(profile.user)
+            setProfileStats(profile.stats)
           } catch (retryError) {
             console.error('Failed to fetch user profile after refresh:', retryError)
             // Clear tokens if retry also fails
@@ -104,7 +107,7 @@ function AppContent() {
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
 
       <Route element={user ? <Layout user={user} /> : <Navigate to="/login" replace />}>
-        <Route path="/dashboard" element={<Dashboard user={user} />} />
+        <Route path="/dashboard" element={<Dashboard user={user} profileStats={profileStats} />} />
         <Route path="/transactions" element={<Transactions user={user} />} />
       </Route>
     </Routes>

@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
@@ -34,3 +35,17 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
+
+
+class UserStats(BaseModel):
+    total_transactions: int
+    total_budget_periods: int
+    active_financial_goals: int
+    days_since_signup: int
+    member_since: datetime
+    saving_since: Optional[datetime]
+
+
+class UserProfileResponse(BaseModel):
+    user: UserResponse
+    stats: UserStats

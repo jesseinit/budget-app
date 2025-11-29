@@ -14,6 +14,7 @@ from app.schemas import (
     CategoryBreakdown,
     DashboardSummary,
     MonthlyTrend,
+    SpendTrend,
     YearlySummary,
     Trading212AccountData,
     InvestmentPerformance,
@@ -38,6 +39,9 @@ class AnalyticsService:
         # Get this month's totals
         month_totals = await self._get_month_totals(user_id)
 
+        # Get all-time totals
+        all_time_totals = await self._get_all_time_totals(user_id)
+
         # Calculate savings rate
         savings_rate = self._calculate_savings_rate(
             month_totals["income"], abs(month_totals["savings"]) + abs(month_totals["investments"])
@@ -58,6 +62,8 @@ class AnalyticsService:
         return DashboardSummary(
             current_period=current_period,
             net_worth=net_worth + trading_data.pnl,
+            all_time_income=all_time_totals["income"],
+            all_time_expenses=all_time_totals["expenses"],
             this_month_income=month_totals["income"],
             this_month_expenses=month_totals["expenses"],
             this_month_savings=abs(month_totals["savings"]) - abs(month_totals["adjustments"]),
@@ -130,7 +136,7 @@ class AnalyticsService:
             category_breakdown=category_breakdown,
         )
 
-    async def get_spending_trends(self, user_id: UUID, months: int) -> List[Dict[str, Any]]:
+    async def get_spending_trends(self, user_id: UUID, months: int) -> List[SpendTrend]:
         """Get spending trends over specified number of months"""
         end_date = date.today()
         start_date = end_date - relativedelta(months=months)
@@ -160,16 +166,16 @@ class AnalyticsService:
         result = await self.db.execute(query)
         trends = result.fetchall()
 
-        # Format the results
+        # Format the results using SpendTrend schema
         formatted_trends = []
         for trend in trends:
             formatted_trends.append(
-                {
-                    "year": int(trend.year),
-                    "month": int(trend.month),
-                    "type": trend.type,
-                    "amount": float(trend.total_amount),
-                }
+                SpendTrend(
+                    year=int(trend.year),
+                    month=int(trend.month),
+                    type=trend.type,
+                    amount=float(trend.total_amount),
+                )
             )
 
         return formatted_trends
@@ -202,7 +208,6 @@ class AnalyticsService:
 
         # Calculate total for percentages
         total_amount = sum(abs(item.amount) for item in breakdown_data)
-        print(total_amount)
 
         # Format results
         breakdown = []
@@ -288,6 +293,39 @@ class AnalyticsService:
             "savings": current_period.total_savings,
             "investments": current_period.total_investments,
             "adjustments": current_period.total_adjustments,
+        }
+
+    async def _get_all_time_totals(self, user_id: UUID) -> Dict[str, Decimal]:
+        """Get all-time income and expense totals"""
+        query = (
+            select(
+                Transaction.type,
+                func.sum(Transaction.amount).label("total_amount"),
+            )
+            .where(
+                and_(
+                    Transaction.user_id == user_id,
+                    Transaction.type.in_(["income", "expense"]),
+                )
+            )
+            .group_by(Transaction.type)
+        )
+
+        result = await self.db.execute(query)
+        totals = result.fetchall()
+
+        all_time_income = Decimal("0")
+        all_time_expenses = Decimal("0")
+
+        for row in totals:
+            if row.type == "income":
+                all_time_income = Decimal(str(row.total_amount))
+            elif row.type == "expense":
+                all_time_expenses = abs(Decimal(str(row.total_amount)))
+
+        return {
+            "income": all_time_income,
+            "expenses": all_time_expenses,
         }
 
     async def _get_top_expense_categories(self, user_id: UUID, period_id: Optional[UUID]) -> List[CategoryBreakdown]:
