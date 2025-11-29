@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 from uuid import UUID
 
@@ -85,37 +86,46 @@ class UserService:
     async def get_user_stats(self, user_id: UUID) -> dict:
         """Get user statistics"""
 
-        # Get first date of transaction
-        first_transaction_query = select(func.min(Transaction.transacted_at)).where(Transaction.user_id == user_id)
-        first_transaction_result = await self.db.execute(first_transaction_query)
-        first_transaction_date = first_transaction_result.scalar()
-
-        # Count transactions
-        transaction_count_query = select(func.count(Transaction.id)).where(Transaction.user_id == user_id)
-        transaction_count_result = await self.db.execute(transaction_count_query)
-        transaction_count = transaction_count_result.scalar()
-
-        # Count budget periods
-        period_count_query = select(func.count(BudgetPeriod.id)).where(BudgetPeriod.user_id == user_id)
-        period_count_result = await self.db.execute(period_count_query)
-        period_count = period_count_result.scalar()
-
-        # Count financial goals
-        goal_count_query = select(func.count(FinancialGoal.id)).where(
-            and_(FinancialGoal.user_id == user_id, FinancialGoal.is_active is True)
+        # Aggregate stats in a single round-trip
+        first_period_end_date_subq = (
+            select(func.min(BudgetPeriod.ended_at))
+            .where(BudgetPeriod.user_id == user_id)
+            .scalar_subquery()
         )
-        goal_count_result = await self.db.execute(goal_count_query)
-        goal_count = goal_count_result.scalar()
+        transaction_count_subq = (
+            select(func.count(Transaction.id))
+            .where(Transaction.user_id == user_id)
+            .scalar_subquery()
+        )
+        period_count_subq = (
+            select(func.count(BudgetPeriod.id))
+            .where(BudgetPeriod.user_id == user_id)
+            .scalar_subquery()
+        )
+        goal_count_subq = (
+            select(func.count(FinancialGoal.id))
+            .where(and_(FinancialGoal.user_id == user_id, FinancialGoal.is_active is True))
+            .scalar_subquery()
+        )
 
-        # Get user creation date
+        stats_query = select(
+            first_period_end_date_subq.label("first_period_end_date"),
+            transaction_count_subq.label("transaction_count"),
+            period_count_subq.label("period_count"),
+            goal_count_subq.label("goal_count"),
+        )
+
+        stats_result = await self.db.execute(stats_query)
+        stats_row = stats_result.one()
+
         user = await self.get_user_by_id(user_id)
-        days_since_signup = (user.created_at.date() - user.created_at.date()).days if user else 0
+        days_since_signup = (date.today() - user.created_at.date()).days if user else 0
 
         return {
-            "total_transactions": transaction_count or 0,
-            "total_budget_periods": period_count or 0,
-            "active_financial_goals": goal_count or 0,
+            "total_transactions": stats_row.transaction_count or 0,
+            "total_budget_periods": stats_row.period_count or 0,
+            "active_financial_goals": stats_row.goal_count or 0,
             "days_since_signup": days_since_signup,
             "member_since": user.created_at if user else None,
-            "saving_since": first_transaction_date,
+            "saving_since": stats_row.first_period_end_date,
         }

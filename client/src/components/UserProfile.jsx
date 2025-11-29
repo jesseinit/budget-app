@@ -224,9 +224,9 @@ function UserProfile({ user }) {
             </div>
 
             {/* Period Trends Chart */}
-            {yearlyData && yearlyData.monthly_trends && (
+            {yearlyData && yearlyData.period_trends && (
               <div className="mb-8">
-                <PeriodTrendsChart monthlyTrends={yearlyData.monthly_trends} currency={userCurrency} />
+                <PeriodTrendsChart periodTrends={yearlyData.period_trends} currency={userCurrency} />
               </div>
             )}
 

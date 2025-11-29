@@ -4,9 +4,9 @@ import Login from './components/Login'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
+import Periods from './pages/Periods'
 import OAuthCallback from './pages/OAuthCallback'
 import { authService } from './services/authService'
-import { ThemeProvider } from './contexts/ThemeContext'
 
 function AppContent() {
   const [user, setUser] = useState(null)
@@ -66,9 +66,9 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-lg">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg">
             <svg
               className="h-12 w-12 animate-spin text-blue-600"
               fill="none"
@@ -89,11 +89,11 @@ function AppContent() {
               />
             </svg>
           </div>
-          <p className="text-lg font-medium text-gray-700 dark:text-gray-200">Loading Budget App...</p>
+          <p className="text-lg font-medium text-gray-700">Loading Budget App...</p>
           <div className="mt-4 flex items-center justify-center gap-2">
-            <div className="h-2 w-2 animate-bounce rounded-full bg-blue-600 dark:bg-blue-400 [animation-delay:-0.3s]" />
-            <div className="h-2 w-2 animate-bounce rounded-full bg-blue-600 dark:bg-blue-400 [animation-delay:-0.15s]" />
-            <div className="h-2 w-2 animate-bounce rounded-full bg-blue-600 dark:bg-blue-400" />
+            <div className="h-2 w-2 animate-bounce rounded-full bg-blue-600 [animation-delay:-0.3s]" />
+            <div className="h-2 w-2 animate-bounce rounded-full bg-blue-600 [animation-delay:-0.15s]" />
+            <div className="h-2 w-2 animate-bounce rounded-full bg-blue-600" />
           </div>
         </div>
       </div>
@@ -109,17 +109,14 @@ function AppContent() {
       <Route element={user ? <Layout user={user} /> : <Navigate to="/login" replace />}>
         <Route path="/dashboard" element={<Dashboard user={user} profileStats={profileStats} />} />
         <Route path="/transactions" element={<Transactions user={user} />} />
+        <Route path="/periods" element={<Periods user={user} />} />
       </Route>
     </Routes>
   )
 }
 
 function App() {
-  return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
-  )
+  return <AppContent />
 }
 
 export default App

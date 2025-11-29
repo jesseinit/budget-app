@@ -23,7 +23,7 @@ class SpendTrend(BaseModel):
     amount: float
 
 
-class MonthlyTrend(BaseModel):
+class PeriodTrend(BaseModel):
     month: str
     income: Decimal
     expenses: Decimal
@@ -41,7 +41,7 @@ class YearlySummary(BaseModel):
     net_savings: Decimal
     savings_rate: float
     periods_count: int
-    monthly_trends: List[MonthlyTrend]
+    period_trends: List[PeriodTrend]
     category_breakdown: List[CategoryBreakdown]
 
 

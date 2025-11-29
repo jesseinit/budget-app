@@ -191,11 +191,11 @@ clean: ## Clean up local files (kubeconfig, terraform state backups)
 
 build-client: ## Build and push client Docker image (multi-platform)
 	@echo "Building and pushing client image..."
-	docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/jesseinit/budget-client:latest --push client/
+	docker buildx build --platform linux/amd64 -t ghcr.io/jesseinit/budget-client:latest --push client/
 
 build-api: ## Build and push API Docker image (multi-platform)
 	@echo "Building and pushing API image..."
-	docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/jesseinit/budget-server:latest --push server/
+	docker buildx build --platform linux/amd64 -t ghcr.io/jesseinit/budget-server:latest --push server/
 
 build-all: ## Build and push both client and API Docker images
 	@echo "Building and pushing all images..."

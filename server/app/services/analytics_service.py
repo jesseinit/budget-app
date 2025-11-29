@@ -13,7 +13,7 @@ from app.models import BudgetPeriod, Category, FinancialGoal, Transaction
 from app.schemas import (
     CategoryBreakdown,
     DashboardSummary,
-    MonthlyTrend,
+    PeriodTrend,
     SpendTrend,
     YearlySummary,
     Trading212AccountData,
@@ -94,10 +94,12 @@ class AnalyticsService:
             .where(
                 and_(
                     BudgetPeriod.user_id == user_id,
-                    BudgetPeriod.started_at <= end_date,
                     or_(
                         BudgetPeriod.ended_at.is_(None),
-                        BudgetPeriod.ended_at >= start_date,
+                        and_(
+                            BudgetPeriod.ended_at >= start_date,
+                            BudgetPeriod.ended_at <= end_date,
+                        ),
                     ),
                 )
             )
@@ -118,7 +120,7 @@ class AnalyticsService:
         savings_rate = self._calculate_savings_rate(total_income, net_savings)
 
         # Get monthly trends
-        monthly_trends = await self._get_monthly_trends(user_id, year)
+        period_trends = await self._get_period_trends(user_id, year)
 
         # Get category breakdown
         category_breakdown = await self._get_yearly_category_breakdown(user_id, year)
@@ -132,7 +134,7 @@ class AnalyticsService:
             net_savings=net_savings,
             savings_rate=savings_rate,
             periods_count=len(periods),
-            monthly_trends=monthly_trends,
+            period_trends=period_trends,
             category_breakdown=category_breakdown,
         )
 
@@ -413,7 +415,7 @@ class AnalyticsService:
 
         return goals
 
-    async def _get_monthly_trends(self, user_id: UUID, year: int) -> List[MonthlyTrend]:
+    async def _get_period_trends(self, user_id: UUID, year: int) -> List[PeriodTrend]:
         """Get budget period trends for a year"""
         # Get all budget periods for the year
         start_date = datetime(year, 1, 1)
@@ -425,10 +427,12 @@ class AnalyticsService:
             .where(
                 and_(
                     BudgetPeriod.user_id == user_id,
-                    BudgetPeriod.started_at <= end_date,
                     or_(
                         BudgetPeriod.ended_at.is_(None),
-                        BudgetPeriod.ended_at >= start_date,
+                        and_(
+                            BudgetPeriod.ended_at >= start_date,
+                            BudgetPeriod.ended_at <= end_date,
+                        ),
                     ),
                 )
             )
@@ -445,7 +449,7 @@ class AnalyticsService:
             period_name = next_month.strftime("%B, %Y")
 
             trends.append(
-                MonthlyTrend(
+                PeriodTrend(
                     month=period_name,
                     income=period.actual_income,
                     expenses=period.total_expenses,

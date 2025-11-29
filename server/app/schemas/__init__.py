@@ -1,7 +1,7 @@
 from app.schemas.analytics_schemas import (
     CategoryBreakdown,
     DashboardSummary,
-    MonthlyTrend,
+    PeriodTrend,
     SpendTrend,
     YearlySummary,
     Trading212AccountData,
@@ -46,7 +46,7 @@ __all__ = [
     "DashboardSummary",
     "YearlySummary",
     "CategoryBreakdown",
-    "MonthlyTrend",
+    "PeriodTrend",
     "SpendTrend",
     "Trading212AccountData",
     "InvestmentPerformance",
