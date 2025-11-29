@@ -32,6 +32,13 @@ scp -i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root
 # Replace 127.0.0.1 with master IP
 sed -i.bak "s/127.0.0.1/$MASTER_IP/g" ~/.kube/config
 
+# Fix TLS certificate issue by adding insecure-skip-tls-verify and removing certificate-authority-data
+# The k3s certificate is only valid for internal IPs (10.0.0.2), not the public IP
+# Remove certificate-authority-data line and add insecure-skip-tls-verify after server line
+sed -i.bak2 -e '/certificate-authority-data:/d' -e '/server: https/a\
+    insecure-skip-tls-verify: true
+' ~/.kube/config
+
 echo "Kubeconfig saved to ~/.kube/config"
 echo ""
 echo "To use this config, run:"

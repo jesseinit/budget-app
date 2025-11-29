@@ -61,3 +61,23 @@ variable "admin_ip" {
   description = "Admin IP address for SSH access (CIDR notation, e.g., 1.2.3.4/32)"
   type        = string
 }
+
+# Cloudflare DNS configuration (optional)
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token for DNS management"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID for your domain"
+  type        = string
+  default     = ""
+}
+
+variable "cloudflare_domain" {
+  description = "Domain name to update (e.g., [budget.jesseinit.dev, budget-api.jesseinit.dev])"
+  type        = list(string)
+  default     = []
+}

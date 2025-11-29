@@ -130,10 +130,10 @@ resource "null_resource" "copy_config_files" {
         root@${hcloud_server.master.ipv4_address} "test -f /root/install-cluster-addons.sh && echo 'Script copied successfully' || (echo 'ERROR: Script not found on master!'; exit 1)"
 
       # Copy sealed-secrets key if it exists
-      if [ -f "${path.root}/../.sealed-secrets-keys/sealed-secrets-key.yaml" ]; then
+      if [ -f "${path.root}/../../.sealed-secrets-keys/sealed-secrets-key.yaml" ]; then
         echo "Copying sealed-secrets key to master..."
         scp -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-          "${path.root}/../.sealed-secrets-keys/sealed-secrets-key.yaml" \
+          "${path.root}/../../.sealed-secrets-keys/sealed-secrets-key.yaml" \
           root@${hcloud_server.master.ipv4_address}:/root/sealed-secrets-key.yaml
         echo "Sealed-secrets key copied successfully"
       else

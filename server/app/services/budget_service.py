@@ -228,8 +228,7 @@ class BudgetService:
 
         period = BudgetPeriod(
             user_id=user_id,
-            start_date=transacted_at,
-            end_date=None,
+            started_at=transacted_at,
             brought_forward=brought_forward,
             status="active",
         )

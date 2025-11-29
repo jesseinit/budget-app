@@ -84,6 +84,9 @@ echo "Step 5: Fetching kubeconfig..."
 cd scripts
 bash get-kubeconfig.sh
 
+# Export KUBECONFIG for all subsequent kubectl commands
+export KUBECONFIG=~/.kube/config
+
 echo ""
 echo "Step 6: Joining worker nodes to the cluster..."
 
@@ -162,6 +165,8 @@ RETRY_DELAY=3
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   READY_NODES=$(kubectl get nodes --no-headers 2>/dev/null | grep -c " Ready " || echo "0")
+  # Remove any whitespace/newlines from the count
+  READY_NODES=$(echo "$READY_NODES" | tr -d '[:space:]')
 
   if [ "$READY_NODES" -ge "$EXPECTED_NODES" ]; then
     echo "All $EXPECTED_NODES nodes are ready!"
@@ -226,9 +231,10 @@ echo ""
 echo "Step 8: Creating Let's Encrypt ClusterIssuers..."
 
 # Apply ClusterIssuer from local k8s manifests
-if [ -f "../../k8s/base/cert-manager-issuer.yaml" ]; then
+# We're in iac/hetzner/scripts, so go back to project root
+if [ -f "../../../k8s/base/cert-manager-issuer.yaml" ]; then
   echo "Applying ClusterIssuer configuration..."
-  kubectl apply -f ../../k8s/base/cert-manager-issuer.yaml
+  kubectl apply -f ../../../k8s/base/cert-manager-issuer.yaml
   echo "ClusterIssuers created successfully!"
 else
   echo "Warning: cert-manager-issuer.yaml not found at k8s/base/cert-manager-issuer.yaml"
@@ -239,10 +245,30 @@ echo ""
 echo "Step 9: Deploying application manifests..."
 
 # Deploy application using kustomize
-if [ -d "../../k8s/base" ]; then
+# We're in iac/hetzner/scripts, so go back to project root
+if [ -d "../../../k8s/base" ]; then
   echo "Applying kustomize manifests from k8s/base..."
-  kubectl apply -k ../../k8s/base
+  kubectl apply -k ../../../k8s/base
   echo "Application manifests deployed successfully!"
+
+  # Apply backed-up sealed-secrets key if it exists
+  echo ""
+  echo "Checking for backed-up sealed-secrets key..."
+  if [ -f "../../../.sealed-secrets-keys/sealed-secrets-key.yaml" ]; then
+    echo "Found backed-up sealed-secrets key. Applying to cluster..."
+    kubectl apply -f ../../../.sealed-secrets-keys/sealed-secrets-key.yaml
+
+    echo "Restarting sealed-secrets controller to pick up the new key..."
+    kubectl delete pod -n kube-system -l app.kubernetes.io/name=sealed-secrets
+
+    echo "Waiting for sealed-secrets controller to restart..."
+    sleep 10
+
+    echo "Sealed-secrets key applied successfully. Secrets should now be decrypted."
+  else
+    echo "No backed-up sealed-secrets key found. Using cluster-generated key."
+    echo "Note: You'll need to re-seal your secrets with the new cluster's public key."
+  fi
 
   echo ""
   echo "Waiting for pods to be ready..."
@@ -253,15 +279,59 @@ else
 fi
 
 echo ""
+echo "Step 10: Updating Cloudflare DNS records..."
+
+# Check if Cloudflare variables are set
+CLOUDFLARE_API_TOKEN=$(terraform -chdir=.. output -raw cloudflare_api_token 2>/dev/null || echo "")
+CLOUDFLARE_ZONE_ID=$(terraform -chdir=.. output -raw cloudflare_zone_id 2>/dev/null || echo "")
+CLOUDFLARE_DOMAIN=$(terraform -chdir=.. output -json cloudflare_domain 2>/dev/null || echo "")
+
+if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ZONE_ID" ] && [ -n "$CLOUDFLARE_DOMAIN" ] && \
+   [ "$CLOUDFLARE_API_TOKEN" != "null" ] && [ "$CLOUDFLARE_API_TOKEN" != "" ] && \
+   [ "$CLOUDFLARE_ZONE_ID" != "null" ] && [ "$CLOUDFLARE_ZONE_ID" != "" ] && \
+   [ "$CLOUDFLARE_DOMAIN" != "null" ] && [ "$CLOUDFLARE_DOMAIN" != "[]" ] && [ "$CLOUDFLARE_DOMAIN" != "" ]; then
+  echo "Cloudflare configuration detected. Updating DNS records..."
+
+  # Export variables for the update script
+  export CLOUDFLARE_API_TOKEN
+  export CLOUDFLARE_ZONE_ID
+  export CLOUDFLARE_DOMAIN
+
+  # Run the Cloudflare DNS update script
+  if [ -f "update-cloudflare-dns.sh" ]; then
+    bash update-cloudflare-dns.sh
+  else
+    echo "Warning: update-cloudflare-dns.sh not found. Skipping DNS update."
+  fi
+
+  # Clean up exported variables
+  unset CLOUDFLARE_API_TOKEN
+  unset CLOUDFLARE_ZONE_ID
+  unset CLOUDFLARE_DOMAIN
+else
+  echo "Cloudflare configuration not provided. Skipping DNS update."
+  echo "To enable automatic DNS updates, add these to your terraform.tfvars:"
+  echo "  cloudflare_api_token = \"your_token\""
+  echo "  cloudflare_zone_id   = \"your_zone_id\""
+  echo "  cloudflare_domain    = [\"budget.yourdomain.com\", \"api.yourdomain.com\"]"
+fi
+
+echo ""
 echo "=== Cluster Setup Complete! ==="
 echo ""
 echo "Cluster Information:"
 terraform -chdir=.. output
 echo ""
+echo "Your kubeconfig is ready at ~/.kube/config"
+echo ""
 echo "Next steps:"
-echo "1. Set KUBECONFIG: export KUBECONFIG=~/.kube/config"
+echo "1. In a new terminal, export KUBECONFIG: export KUBECONFIG=~/.kube/config"
 echo "2. Verify nodes: kubectl get nodes"
-echo "3. Deploy your application using k8s manifests"
+echo "3. Check pods: kubectl get pods -n budget-app"
+echo "4. Re-seal secrets with the new cluster's public key (see documentation)"
+if [ -n "$CLOUDFLARE_DOMAIN" ] && [ "$CLOUDFLARE_DOMAIN" != "null" ]; then
+  echo "5. Your application will be available at: https://$CLOUDFLARE_DOMAIN"
+fi
 echo ""
 echo "To SSH into master: ssh -i $SSH_KEY root@$MASTER_IP"
 echo "To SSH into workers:"

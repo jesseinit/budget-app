@@ -47,3 +47,20 @@ output "worker_count" {
   description = "Number of worker nodes"
   value       = var.worker_count
 }
+
+# Cloudflare outputs (for DNS update script)
+output "cloudflare_api_token" {
+  description = "Cloudflare API token"
+  value       = var.cloudflare_api_token
+  sensitive   = true
+}
+
+output "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID"
+  value       = var.cloudflare_zone_id
+}
+
+output "cloudflare_domain" {
+  description = "Cloudflare domains to update"
+  value       = var.cloudflare_domain
+}

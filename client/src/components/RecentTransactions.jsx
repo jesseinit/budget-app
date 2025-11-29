@@ -118,7 +118,7 @@ function RecentTransactions({ transactions, currency = 'USD' }) {
                   </p>
                   <span className="text-xs text-gray-400">•</span>
                   <p className="text-xs text-gray-500 capitalize">
-                    {transaction.payment_method.replace(/_/g, ' ')}
+                    {transaction.payment_method?.replace(/_/g, ' ') || 'N/A'}
                   </p>
                   {transaction.is_recurring && (
                     <>
