@@ -1,22 +1,20 @@
 import { useState, useEffect } from 'react';
-import { authService } from '../services/authService';
 import { dashboardService } from '../services/dashboardService';
 import { formatCurrency, formatPercentage } from '../utils/currency';
-import StatCard from './StatCard';
-import NetWorthCard from './NetWorthCard';
-import CurrentPeriodCard from './CurrentPeriodCard';
-import RecentTransactions from './RecentTransactions';
-import YearlyAnalytics from './YearlyAnalytics';
-import PeriodTrendsChart from './PeriodTrendsChart';
+import StatCard from '../components/StatCard';
+import NetWorthCard from '../components/NetWorthCard';
+import CurrentPeriodCard from '../components/CurrentPeriodCard';
+import RecentTransactions from '../components/RecentTransactions';
+import YearlyAnalytics from '../components/YearlyAnalytics';
+import PeriodTrendsChart from '../components/PeriodTrendsChart';
 
-function UserProfile({ user }) {
+function Dashboard({ user }) {
   const [dashboardData, setDashboardData] = useState(null);
   const [yearlyData, setYearlyData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Get user's currency from profile, default to USD
   const userCurrency = user?.currency || 'USD';
 
   useEffect(() => {
@@ -56,56 +54,9 @@ function UserProfile({ user }) {
     setSelectedYear(year);
   };
 
-  const handleLogout = () => {
-    authService.logout();
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation Bar */}
-      <nav className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            {/* Logo/Brand */}
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600">
-                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h1 className="text-xl font-bold text-gray-900 hidden sm:inline">Budget App</h1>
-            </div>
-
-            {/* User Menu */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                <img
-                  src={user.avatar_url}
-                  alt={user.name}
-                  className="h-8 w-8 rounded-full ring-2 ring-white"
-                />
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
-                </div>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span className="hidden sm:inline">Logout</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="h-full bg-gray-50 p-6">
+      <div className="mx-auto max-w-7xl pb-1">
         {/* Welcome Section */}
         <div className="mb-8 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 p-8 text-white shadow-lg">
           <h2 className="text-3xl font-bold">
@@ -198,13 +149,8 @@ function UserProfile({ user }) {
 
             {/* Three Column Layout */}
             <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* Net Worth Card */}
               <NetWorthCard netWorth={dashboardData.net_worth} currency={userCurrency} />
-
-              {/* Current Budget Period */}
               <CurrentPeriodCard currentPeriod={dashboardData.current_period} currency={userCurrency} />
-
-              {/* Yearly Analytics */}
               {yearlyData && (
                 <YearlyAnalytics
                   yearlyData={yearlyData}
@@ -228,9 +174,9 @@ function UserProfile({ user }) {
             </div>
           </>
         )}
-      </main>
+      </div>
     </div>
   );
 }
 
-export default UserProfile;
+export default Dashboard;

@@ -31,7 +31,6 @@ class AnalyticsService:
         """Get comprehensive dashboard summary"""
         # Get current period
         current_period = await self._get_current_period(user_id)
-        logger.info(f"Current Period: {current_period}")
 
         # Calculate total balance
         net_worth = await self._calculate_total_balance(user_id)
@@ -377,40 +376,44 @@ class AnalyticsService:
         return goals
 
     async def _get_monthly_trends(self, user_id: UUID, year: int) -> List[MonthlyTrend]:
-        """Get monthly trends for a year"""
-        trends = []
+        """Get budget period trends for a year"""
+        # Get all budget periods for the year
+        start_date = datetime(year, 1, 1)
+        end_date = datetime(year, 12, 31, 23, 59, 59)
 
-        for month in range(1, 13):
-            month_start = date(year, month, 1)
-            if month == 12:
-                month_end = date(year + 1, 1, 1) - relativedelta(days=1)
-            else:
-                month_end = date(year, month + 1, 1) - relativedelta(days=1)
-
-            # Get transactions for this month
-            query = (
-                select(Transaction.type, func.sum(Transaction.amount).label("total"))
-                .where(
-                    and_(
-                        Transaction.user_id == user_id,
-                        Transaction.transacted_at >= month_start,
-                        Transaction.transacted_at <= month_end,
-                    )
+        query = (
+            select(BudgetPeriod)
+            .options(selectinload(BudgetPeriod.transactions))
+            .where(
+                and_(
+                    BudgetPeriod.user_id == user_id,
+                    BudgetPeriod.started_at <= end_date,
+                    or_(
+                        BudgetPeriod.ended_at.is_(None),
+                        BudgetPeriod.ended_at >= start_date,
+                    ),
                 )
-                .group_by(Transaction.type)
             )
+            .order_by(BudgetPeriod.started_at)
+        )
 
-            result = await self.db.execute(query)
-            month_data = {row.type: row.total for row in result}
+        result = await self.db.execute(query)
+        periods = result.scalars().all()
+
+        trends = []
+        for period in periods:
+            # Calculate period name from budget period's started_at
+            next_month = period.started_at + relativedelta(days=28)
+            period_name = next_month.strftime("%B, %Y")
 
             trends.append(
                 MonthlyTrend(
-                    month=f"{year}-{month:02d}",
-                    income=month_data.get("income", Decimal("0")),
-                    expenses=month_data.get("expense", Decimal("0")),
-                    savings=month_data.get("saving", Decimal("0")),
-                    investments=month_data.get("investment", Decimal("0")),
-                    net_worth=month_data.get("income", Decimal("0")) - month_data.get("expense", Decimal("0")),
+                    month=period_name,
+                    income=period.actual_income,
+                    expenses=period.total_expenses,
+                    savings=period.total_savings,
+                    investments=period.total_investments,
+                    net_worth=period.actual_income - abs(period.total_expenses),
                 )
             )
 

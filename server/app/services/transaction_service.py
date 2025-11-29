@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import and_, desc, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.models.category_models import Category
 from app.models.transaction_models import Transaction
@@ -29,7 +29,10 @@ class TransactionService:
         period_id: Optional[UUID] = None,
     ) -> List[Transaction]:
         """Get transactions with filters"""
-        query = select(Transaction).options(joinedload(Transaction.category))
+        query = select(Transaction).options(
+            joinedload(Transaction.category),
+            selectinload(Transaction.budget_period)
+        )
 
         # Base filter for user
         filters = [Transaction.user_id == user_id]
@@ -113,7 +116,10 @@ class TransactionService:
 
     async def get_transaction(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
         """Get a specific transaction"""
-        query = select(Transaction).options(joinedload(Transaction.category))
+        query = select(Transaction).options(
+            joinedload(Transaction.category),
+            selectinload(Transaction.budget_period)
+        )
         query = query.where(and_(Transaction.id == transaction_id, Transaction.user_id == user_id))
 
         result = await self.db.execute(query)

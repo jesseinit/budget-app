@@ -74,10 +74,21 @@ class TransactionResponse(TransactionBase):
 
 class TransactionWithCategory(TransactionResponse):
     category: CategoryResponse
+    period_name: Optional[str] = None
 
-    @computed_field
-    def period_name(self) -> str:
-        # Format period name as "Month Name - Year" of the next month
-        next_month = self.transacted_at + timedelta(days=28)
-        # format the month and year
-        return next_month.strftime("%B, %Y")
+    @model_validator(mode="before")
+    @classmethod
+    def extract_period_name(cls, data):
+        """Extract period_name from the budget_period relationship"""
+        if hasattr(data, "budget_period") and data.budget_period:
+            # Calculate period name from budget period's started_at
+            next_month = data.budget_period.started_at + timedelta(days=28)
+            period_name = next_month.strftime("%B, %Y")
+            # If data is a model instance, convert to dict
+            if hasattr(data, "__dict__"):
+                data_dict = {key: getattr(data, key) for key in data.__dict__ if not key.startswith("_")}
+                data_dict["period_name"] = period_name
+                return data_dict
+            else:
+                data["period_name"] = period_name
+        return data

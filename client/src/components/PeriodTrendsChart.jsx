@@ -20,46 +20,49 @@ ChartJS.register(
   Legend
 );
 
-function MonthlyTrendsChart({ monthlyTrends, currency = 'USD' }) {
+function PeriodTrendsChart({ monthlyTrends, currency = 'USD' }) {
 
-  const getMonthName = (monthStr) => {
-    const date = new Date(monthStr + '-01');
+  const getPeriodLabel = (periodStr) => {
+    // Period format is "Month, Year" (e.g., "January, 2025")
+    // Extract just the month abbreviation
+    const monthName = periodStr.split(',')[0];
+    const date = new Date(monthName + ' 1, 2000');
     return date.toLocaleDateString('en-US', { month: 'short' });
   };
 
   if (!monthlyTrends || monthlyTrends.length === 0) {
     return (
       <div className="rounded-xl bg-white p-6 shadow-md">
-        <p className="text-gray-500">No monthly trends available</p>
+        <p className="text-gray-500">No period trends available</p>
       </div>
     );
   }
 
-  // Filter out months with no data
-  const filteredMonths = monthlyTrends.filter(month => {
-    const income = parseFloat(month.income);
-    const expenses = parseFloat(month.expenses);
-    const savings = parseFloat(month.savings);
+  // Filter out periods with no data
+  const filteredPeriods = monthlyTrends.filter(period => {
+    const income = parseFloat(period.income);
+    const expenses = parseFloat(period.expenses);
+    const savings = parseFloat(period.savings);
     return income > 0 || expenses > 0 || savings > 0;
   });
 
-  if (filteredMonths.length === 0) {
+  if (filteredPeriods.length === 0) {
     return (
       <div className="rounded-xl bg-white p-6 shadow-md">
-        <p className="text-gray-500">No monthly trends available</p>
+        <p className="text-gray-500">No period trends available</p>
       </div>
     );
   }
 
   // Prepare data for Chart.js
-  const labels = filteredMonths.map(month => getMonthName(month.month));
+  const labels = filteredPeriods.map(period => getPeriodLabel(period.month));
 
   const data = {
     labels,
     datasets: [
       {
         label: 'Income',
-        data: filteredMonths.map(month => Math.abs(parseFloat(month.income))),
+        data: filteredPeriods.map(period => Math.abs(parseFloat(period.income))),
         backgroundColor: 'rgba(16, 185, 129, 0.8)',
         borderColor: 'rgb(16, 185, 129)',
         borderWidth: 1,
@@ -69,7 +72,7 @@ function MonthlyTrendsChart({ monthlyTrends, currency = 'USD' }) {
       },
       {
         label: 'Expenses',
-        data: filteredMonths.map(month => Math.abs(parseFloat(month.expenses))),
+        data: filteredPeriods.map(period => Math.abs(parseFloat(period.expenses))),
         backgroundColor: 'rgba(239, 68, 68, 0.8)',
         borderColor: 'rgb(239, 68, 68)',
         borderWidth: 1,
@@ -79,7 +82,7 @@ function MonthlyTrendsChart({ monthlyTrends, currency = 'USD' }) {
       },
       {
         label: 'Savings',
-        data: filteredMonths.map(month => Math.abs(parseFloat(month.savings))),
+        data: filteredPeriods.map(period => Math.abs(parseFloat(period.savings))),
         backgroundColor: 'rgba(59, 130, 246, 0.8)',
         borderColor: 'rgb(59, 130, 246)',
         borderWidth: 1,
@@ -168,15 +171,15 @@ function MonthlyTrendsChart({ monthlyTrends, currency = 'USD' }) {
   };
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white shadow-md">
+    <div className="overflow-hidden rounded-xl bg-white shadow-md border border-gray-200">
       <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
         <div className="flex items-center gap-2">
-          <div className="rounded-full bg-blue-500 p-2">
+          <div className="rounded-lg bg-blue-600 p-2 shadow-sm">
             <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">Monthly Trends</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Budget Period Trends</h3>
         </div>
       </div>
 
@@ -189,4 +192,4 @@ function MonthlyTrendsChart({ monthlyTrends, currency = 'USD' }) {
   );
 }
 
-export default MonthlyTrendsChart;
+export default PeriodTrendsChart;

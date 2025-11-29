@@ -11,6 +11,7 @@ from app.api.v1 import (
     auth,
     budget_periods,
     categories,
+    currencies,
     financial_goals,
     transactions,
     users,
@@ -51,6 +52,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(currencies.router, prefix="/api/v1/currencies", tags=["Currencies"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(transactions.router, prefix="/api/v1/transactions", tags=["Transactions"])
 app.include_router(categories.router, prefix="/api/v1/categories", tags=["Categories"])

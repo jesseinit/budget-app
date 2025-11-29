@@ -222,16 +222,16 @@ class BudgetService:
 
         # Create new period for this date
         user = await self.db.get(User, user_id)
-        start_date, end_date = calculate_salary_period(user.salary_day, transacted_at)
+        # start_date, end_date = calculate_salary_period(user.salary_day, transacted_at)
 
-        brought_forward = await self._get_brought_forward_amount(user_id, start_date)
+        brought_forward = await self._get_brought_forward_amount(user_id, transacted_at)
 
         period = BudgetPeriod(
             user_id=user_id,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=transacted_at,
+            end_date=None,
             brought_forward=brought_forward,
-            status="active" if end_date >= datetime.now(timezone.utc) else "completed",
+            status="active",
         )
 
         self.db.add(period)

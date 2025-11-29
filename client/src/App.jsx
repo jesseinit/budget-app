@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import Login from './components/Login'
-import UserProfile from './components/UserProfile'
+import Layout from './components/Layout'
+import Dashboard from './pages/Dashboard'
+import Transactions from './pages/Transactions'
 import OAuthCallback from './pages/OAuthCallback'
 import { authService } from './services/authService'
 
@@ -30,8 +32,26 @@ function App() {
         setUser(profile)
       } catch (error) {
         console.error('Failed to fetch user profile:', error)
-        // Clear invalid token
-        localStorage.removeItem('access_token')
+
+        // Attempt to refresh the token before clearing
+        const newToken = await authService.refreshToken()
+
+        if (newToken) {
+          // Token refreshed successfully, retry fetching profile
+          try {
+            const profile = await authService.getUserProfile()
+            setUser(profile)
+          } catch (retryError) {
+            console.error('Failed to fetch user profile after refresh:', retryError)
+            // Clear tokens if retry also fails
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('refresh_token')
+          }
+        } else {
+          // Refresh failed, clear tokens
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+        }
       } finally {
         setLoading(false)
       }
@@ -79,7 +99,13 @@ function App() {
   return (
     <Routes>
       <Route path="/auth/callback" element={<OAuthCallback />} />
-      <Route path="/" element={user ? <UserProfile user={user} /> : <Login />} />
+      <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+
+      <Route element={user ? <Layout user={user} /> : <Navigate to="/login" replace />}>
+        <Route path="/dashboard" element={<Dashboard user={user} />} />
+        <Route path="/transactions" element={<Transactions user={user} />} />
+      </Route>
     </Routes>
   )
 }
