@@ -2,22 +2,26 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import { formatCurrencyShort } from '../utils/currency';
 
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 function PeriodTrendsChart({ periodTrends, currency = 'USD' }) {
@@ -63,32 +67,53 @@ function PeriodTrendsChart({ periodTrends, currency = 'USD' }) {
       {
         label: 'Income',
         data: filteredPeriods.map(period => Math.abs(parseFloat(period.income))),
-        backgroundColor: 'rgba(16, 185, 129, 0.8)',
         borderColor: 'rgb(16, 185, 129)',
-        borderWidth: 1,
-        borderRadius: 6,
-        barPercentage: 0.8,
-        categoryPercentage: 0.9,
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderWidth: 2.5,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: 'rgb(16, 185, 129)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverBackgroundColor: 'rgb(16, 185, 129)',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
       },
       {
         label: 'Expenses',
         data: filteredPeriods.map(period => Math.abs(parseFloat(period.expenses))),
-        backgroundColor: 'rgba(239, 68, 68, 0.8)',
         borderColor: 'rgb(239, 68, 68)',
-        borderWidth: 1,
-        borderRadius: 6,
-        barPercentage: 0.8,
-        categoryPercentage: 0.9,
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        borderWidth: 2.5,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: 'rgb(239, 68, 68)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverBackgroundColor: 'rgb(239, 68, 68)',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
       },
       {
         label: 'Savings',
         data: filteredPeriods.map(period => Math.abs(parseFloat(period.savings))),
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-        borderColor: 'rgb(59, 130, 246)',
-        borderWidth: 1,
-        borderRadius: 6,
-        barPercentage: 0.8,
-        categoryPercentage: 0.9,
+        borderColor: 'rgb(99, 102, 241)',
+        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+        borderWidth: 2.5,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: 'rgb(99, 102, 241)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverBackgroundColor: 'rgb(99, 102, 241)',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
       },
     ],
   };
@@ -105,16 +130,19 @@ function PeriodTrendsChart({ periodTrends, currency = 'USD' }) {
         position: 'top',
         labels: {
           usePointStyle: true,
-          padding: 15,
+          pointStyle: 'circle',
+          padding: 20,
           font: {
-            size: 12,
+            size: 13,
             family: "'Inter', 'system-ui', 'sans-serif'",
+            weight: '500',
           },
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: 'rgba(17, 24, 39, 0.95)',
         padding: 12,
+        cornerRadius: 8,
         titleFont: {
           size: 14,
           weight: 'bold',
@@ -122,6 +150,7 @@ function PeriodTrendsChart({ periodTrends, currency = 'USD' }) {
         bodyFont: {
           size: 13,
         },
+        bodySpacing: 8,
         callbacks: {
           label: function(context) {
             let label = context.dataset.label || '';
@@ -138,33 +167,35 @@ function PeriodTrendsChart({ periodTrends, currency = 'USD' }) {
     },
     scales: {
       x: {
-        stacked: true,
         grid: {
           display: false,
           drawBorder: false,
         },
         ticks: {
           font: {
-            size: 11,
+            size: 12,
+            weight: '500',
           },
           color: '#6b7280',
+          padding: 8,
         },
       },
       y: {
-        stacked: true,
         beginAtZero: true,
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
+          color: 'rgba(0, 0, 0, 0.06)',
           drawBorder: false,
+          lineWidth: 1,
         },
         ticks: {
           callback: function(value) {
             return formatCurrencyShort(value, currency);
           },
           font: {
-            size: 11,
+            size: 12,
           },
           color: '#6b7280',
+          padding: 8,
         },
       },
     },
@@ -185,7 +216,7 @@ function PeriodTrendsChart({ periodTrends, currency = 'USD' }) {
 
       <div className="p-6">
         <div style={{ height: '400px' }}>
-          <Bar data={data} options={options} />
+          <Line data={data} options={options} />
         </div>
       </div>
     </div>

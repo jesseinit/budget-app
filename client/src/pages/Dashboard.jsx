@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '../services/dashboardService';
 import { formatCurrency, formatPercentage } from '../utils/currency';
 import StatCard from '../components/StatCard';
-import NetWorthCard from '../components/NetWorthCard';
+import FinancialGoalsCard from '../components/FinancialGoalsCard';
 import CurrentPeriodCard from '../components/CurrentPeriodCard';
 import RecentTransactions from '../components/RecentTransactions';
 import YearlyAnalytics from '../components/YearlyAnalytics';
@@ -176,7 +176,7 @@ function Dashboard({ user, profileStats }) {
 
             {/* Three Column Layout */}
             <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <NetWorthCard netWorth={dashboardData.net_worth} currency={userCurrency} />
+              <FinancialGoalsCard goals={dashboardData.financial_goals_progress} currency={userCurrency} />
               <CurrentPeriodCard currentPeriod={dashboardData.current_period} currency={userCurrency} />
               {yearlyData && (
                 <YearlyAnalytics

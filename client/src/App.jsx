@@ -5,6 +5,7 @@ import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import Periods from './pages/Periods'
+import FinancialGoals from './pages/FinancialGoals'
 import OAuthCallback from './pages/OAuthCallback'
 import { authService } from './services/authService'
 
@@ -110,6 +111,7 @@ function AppContent() {
         <Route path="/dashboard" element={<Dashboard user={user} profileStats={profileStats} />} />
         <Route path="/transactions" element={<Transactions user={user} />} />
         <Route path="/periods" element={<Periods user={user} />} />
+        <Route path="/goals" element={<FinancialGoals user={user} />} />
       </Route>
     </Routes>
   )

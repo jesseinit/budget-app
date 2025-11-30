@@ -70,86 +70,97 @@ function Periods({ user }) {
   }
 
   return (
-    <div className="h-full bg-gray-50 p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="h-full bg-gray-50 p-4 sm:p-6">
+      <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Budget Periods</h1>
-          <p className="text-sm text-gray-600">Track your historical and active periods at a glance.</p>
+          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl">Budget Periods</h1>
+          <p className="text-xs text-gray-600 sm:text-sm">Track your historical and active periods at a glance.</p>
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="space-y-3 sm:space-y-0 sm:overflow-hidden sm:rounded-lg sm:border sm:border-gray-200 sm:bg-white sm:shadow-sm">
           {sortedPeriods.map((period) => (
             <div
               key={period.id}
-              className="flex flex-col gap-4 border-b border-gray-100 px-4 py-4 last:border-b-0 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
+              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:bg-gray-50 sm:rounded-none sm:border-0 sm:border-b sm:shadow-none last:sm:border-b-0"
             >
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
-                  </svg>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-sm font-semibold text-gray-900">{period.period_name}</div>
-                  <div className="text-xs text-gray-500">{formatDate(period.started_at)} → {formatDate(period.ended_at)}</div>
-                  <div className="text-[11px] text-gray-400">ID: {period.id.slice(0, 8)}…</div>
-                  <div className="flex flex-wrap gap-2 text-xs font-semibold text-gray-800">
-                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1">
-                      B/F {formatCurrency(period.brought_forward || 0, userCurrency)}
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1">
-                      C/F {formatCurrency(period.carried_forward || 0, userCurrency)}
-                    </span>
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <div className="text-sm font-semibold text-gray-900 sm:text-base">
+                      {formatDate(period.started_at)} → {formatDate(period.ended_at)}
+                    </div>
+                    <StatusBadge status={period.status} />
                   </div>
                 </div>
+                <button
+                  disabled={period.status === 'completed' || completingId === period.id}
+                  onClick={async () => {
+                    const endedAt = window.prompt(
+                      'Enter period end datetime (ISO, e.g. 2025-07-25T12:00:00):',
+                      period.ended_at ? period.ended_at.replace('Z', '') : '',
+                    );
+                    if (!endedAt) return;
+                    try {
+                      setCompletingId(period.id);
+                      await periodService.complete(period.id, endedAt);
+                      const refreshed = await periodService.list();
+                      setPeriods(refreshed);
+                    } catch (err) {
+                      console.error('Error completing period:', err);
+                      alert('Failed to close period. Please try again.');
+                    } finally {
+                      setCompletingId(null);
+                    }
+                  }}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-3"
+                >
+                  {completingId === period.id ? 'Closing…' : 'Close'}
+                </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 text-sm sm:justify-end">
-                <div className="flex flex-col text-right">
-                  <span className="text-[11px] uppercase text-gray-500">Income</span>
-                  <span className="font-semibold text-green-600">{formatCurrency(period.actual_income || 0, userCurrency)}</span>
+              <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-medium uppercase text-gray-500 sm:text-[11px]">B/F</span>
+                  <span className="text-xs font-semibold text-gray-900 sm:text-sm">
+                    {formatCurrency(period.brought_forward || 0, userCurrency)}
+                  </span>
                 </div>
-                <div className="flex flex-col text-right">
-                  <span className="text-[11px] uppercase text-gray-500">Expenses</span>
-                  <span className="font-semibold text-red-600">{formatCurrency(period.total_expenses || 0, userCurrency)}</span>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-medium uppercase text-gray-500 sm:text-[11px]">C/F</span>
+                  <span className="text-xs font-semibold text-gray-900 sm:text-sm">
+                    {formatCurrency(period.carried_forward || 0, userCurrency)}
+                  </span>
                 </div>
-                <div className="flex flex-col text-right">
-                  <span className="text-[11px] uppercase text-gray-500">Savings</span>
-                  <span className="font-semibold text-indigo-600">{formatCurrency(period.total_savings || 0, userCurrency)}</span>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-medium uppercase text-gray-500 sm:text-[11px]">Income</span>
+                  <span className="text-xs font-semibold text-green-600 sm:text-sm">
+                    {formatCurrency(period.actual_income || 0, userCurrency)}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status={period.status} />
-                  <button
-                    disabled={period.status === 'completed' || completingId === period.id}
-                    onClick={async () => {
-                      const endedAt = window.prompt(
-                        'Enter period end datetime (ISO, e.g. 2025-07-25T12:00:00):',
-                        period.ended_at ? period.ended_at.replace('Z', '') : '',
-                      );
-                      if (!endedAt) return;
-                      try {
-                        setCompletingId(period.id);
-                        await periodService.complete(period.id, endedAt);
-                        const refreshed = await periodService.list();
-                        setPeriods(refreshed);
-                      } catch (err) {
-                        console.error('Error completing period:', err);
-                        alert('Failed to close period. Please try again.');
-                      } finally {
-                        setCompletingId(null);
-                      }
-                    }}
-                    className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-800 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {completingId === period.id ? 'Closing…' : 'Close'}
-                  </button>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-medium uppercase text-gray-500 sm:text-[11px]">Expenses</span>
+                  <span className="text-xs font-semibold text-red-600 sm:text-sm">
+                    {formatCurrency(period.total_expenses || 0, userCurrency)}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-medium uppercase text-gray-500 sm:text-[11px]">Savings</span>
+                  <span className="text-xs font-semibold text-indigo-600 sm:text-sm">
+                    {formatCurrency(period.total_savings || 0, userCurrency)}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-medium uppercase text-gray-500 sm:text-[11px]">Investments</span>
+                  <span className="text-xs font-semibold text-gray-900 sm:text-sm">
+                    {formatCurrency(period.total_investments || 0, userCurrency)}
+                  </span>
                 </div>
               </div>
             </div>
           ))}
 
           {sortedPeriods.length === 0 && (
-            <div className="px-4 py-6 text-center text-sm text-gray-500">No periods found.</div>
+            <div className="px-4 py-6 text-center text-xs text-gray-500 sm:text-sm">No periods found.</div>
           )}
         </div>
       </div>

@@ -104,7 +104,7 @@ class UserService:
         )
         goal_count_subq = (
             select(func.count(FinancialGoal.id))
-            .where(and_(FinancialGoal.user_id == user_id, FinancialGoal.is_active is True))
+            .where(and_(FinancialGoal.user_id == user_id, FinancialGoal.is_active))
             .scalar_subquery()
         )
 
